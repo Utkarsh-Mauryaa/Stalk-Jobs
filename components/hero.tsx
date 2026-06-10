@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { LogoMarquee } from "@/components/logo-marquee"
+import { signIn, useSession } from "next-auth/react"
 
 export function Hero() {
+  const { data: session } = useSession()
+
   return (
     <section className="relative overflow-hidden pt-20 pb-32 lg:pt-32 lg:pb-48 mesh-gradient">
       <motion.div 
@@ -49,11 +52,21 @@ export function Hero() {
             transition={{ delay: 0.5, duration: 0.6 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <Link href="/dashboard">
-              <Button size="lg" className="gap-2 group">
-                Get Started for Free <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            {session ? (
+              <Link href="/dashboard">
+                <Button size="lg" className="gap-2 group">
+                  Get Started <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            ) : (
+              <Button 
+                size="lg" 
+                className="gap-2 group"
+                onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              >
+                Get Started <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
-            </Link>
+            )}
           </motion.div>
           
           <motion.div
