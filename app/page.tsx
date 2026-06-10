@@ -26,12 +26,11 @@ export default function LandingPage() {
                 Auto-detect applications, rejections, and interviews without lifting a finger.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="gap-2">
-                  Get Started for Free <ArrowRight className="h-4 w-4" />
-                </Button>
-                <Button size="lg" variant="secondary">
-                  View Demo
-                </Button>
+                <Link href="/dashboard">
+                  <Button size="lg" className="gap-2">
+                    Get Started for Free <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

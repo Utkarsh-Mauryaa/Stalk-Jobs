@@ -17,8 +17,12 @@ export function Navbar() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm">Log In</Button>
-          <Button variant="primary" size="sm" className="rounded-sm">Sign Up</Button>
+          <Link href="/dashboard">
+            <Button variant="ghost" size="sm">Log In</Button>
+          </Link>
+          <Link href="/dashboard">
+            <Button variant="primary" size="sm" className="rounded-sm">Sign Up</Button>
+          </Link>
         </div>
       </div>
     </nav>
