@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, Mail, Zap, Shield, Search } from "lucide-react"
 import { motion } from "framer-motion"
+import { LogoMarquee } from "@/components/logo-marquee"
 
 const container = {
   hidden: { opacity: 0 },
@@ -74,6 +75,15 @@ export default function LandingPage() {
                     Get Started for Free <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+                className="w-full"
+              >
+                <LogoMarquee />
               </motion.div>
             </div>
           </motion.div>
