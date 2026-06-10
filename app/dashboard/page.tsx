@@ -27,8 +27,25 @@ import {
   X,
   StickyNote
 } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
-const INITIAL_JOBS = [
+type Socials = {
+  linkedin?: string;
+  email?: string;
+  x?: string;
+};
+
+type Job = {
+  id: number;
+  company: string;
+  role: string;
+  status: "applied" | "ongoing" | "ghosted" | "rejected";
+  appliedDate: string;
+  socials: Socials;
+  notes: string;
+};
+
+const INITIAL_JOBS: Job[] = [
   {
     id: 1,
     company: "Vercel",
@@ -76,29 +93,44 @@ const INITIAL_JOBS = [
   }
 ]
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+}
+
+const item = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0 }
+}
+
 export default function Dashboard() {
-  const [jobs, setJobs] = useState(INITIAL_JOBS)
+  const [jobs, setJobs] = useState<Job[]>(INITIAL_JOBS)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [ghostDays, setGhostDays] = useState(14)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [editingJob, setEditingJob] = useState<typeof INITIAL_JOBS[0] | null>(null)
+  const [editingJob, setEditingJob] = useState<Job | null>(null)
 
   // Use the session date: June 10, 2026
   const TODAY = new Date("2026-06-10")
 
-  const [newJob, setNewJob] = useState({
+  const [newJob, setNewJob] = useState<Omit<Job, "id">>({
     company: "",
     role: "",
-    status: "applied" as const,
+    status: "applied",
     appliedDate: TODAY.toISOString().split("T")[0],
     socials: { linkedin: "", email: "", x: "" },
     notes: ""
   })
 
-  const getEffectiveStatus = (job: typeof INITIAL_JOBS[0]) => {
+  const getEffectiveStatus = (job: Job) => {
     if (job.status === "rejected") return "rejected"
     
     const appliedDate = new Date(job.appliedDate)
@@ -168,7 +200,7 @@ export default function Dashboard() {
     setEditingJob(null)
   }
 
-  const startEditing = (job: typeof INITIAL_JOBS[0]) => {
+  const startEditing = (job: Job) => {
     setEditingJob({ ...job })
     setIsEditOpen(true)
   }
@@ -177,15 +209,26 @@ export default function Dashboard() {
     <div className="flex min-h-screen flex-col bg-canvas-soft">
       <Navbar />
       
-      <main className="flex-1 p-4 sm:p-6 lg:p-8">
+      <motion.main 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex-1 p-4 sm:p-6 lg:p-8"
+      >
         <div className="mx-auto max-w-7xl">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
               <h1 className="text-2xl font-bold tracking-tight text-ink">Applications</h1>
               <p className="text-sm text-body">Manage and track your job search progress.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex flex-wrap gap-3"
+            >
               <div className="flex items-center gap-2 bg-canvas border border-hairline rounded-md px-3 py-1 text-sm text-body">
                 <Clock className="h-4 w-4 text-mute" />
                 <span>Auto-Ghost after:</span>
@@ -200,7 +243,7 @@ export default function Dashboard() {
               <Button size="sm" className="gap-2" onClick={() => setIsDialogOpen(true)}>
                 <Plus className="h-4 w-4" /> Add Application
               </Button>
-            </div>
+            </motion.div>
           </div>
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -373,19 +416,19 @@ export default function Dashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
                       <input
                         placeholder="LinkedIn URL"
-                        value={editingJob.socials.linkedin}
+                        value={editingJob.socials?.linkedin || ""}
                         onChange={(e) => setEditingJob({ ...editingJob, socials: { ...editingJob.socials, linkedin: e.target.value } })}
                         className="h-9 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ink/20"
                       />
                       <input
                         placeholder="Recruiter Email"
-                        value={editingJob.socials.email}
+                        value={editingJob.socials?.email || ""}
                         onChange={(e) => setEditingJob({ ...editingJob, socials: { ...editingJob.socials, email: e.target.value } })}
                         className="h-9 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ink/20"
                       />
                       <input
                         placeholder="X (Twitter) URL"
-                        value={editingJob.socials.x}
+                        value={editingJob.socials?.x || ""}
                         onChange={(e) => setEditingJob({ ...editingJob, socials: { ...editingJob.socials, x: e.target.value } })}
                         className="h-9 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ink/20 sm:col-span-2"
                       />
@@ -403,15 +446,25 @@ export default function Dashboard() {
           </Dialog>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+          >
             <StatCard label="Applied" value={stats.applied.toString()} />
             <StatCard label="Ongoing" value={stats.ongoing.toString()} />
             <StatCard label="Ghosted" value={stats.ghosted.toString()} />
             <StatCard label="Rejected" value={stats.rejected.toString()} />
-          </div>
+          </motion.div>
 
           {/* Filters & Search */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col md:flex-row gap-4 mb-6"
+          >
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mute" />
               <input 
@@ -443,10 +496,15 @@ export default function Dashboard() {
                 <ChevronDown className="absolute right-3 h-4 w-4 text-mute pointer-events-none" />
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Job List */}
-          <div className="rounded-xl border border-hairline bg-canvas shadow-level-1 overflow-hidden">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-xl border border-hairline bg-canvas shadow-level-1 overflow-hidden"
+          >
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
@@ -460,84 +518,104 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-hairline">
-                  {filteredJobs.length > 0 ? (
-                    filteredJobs.map((job) => (
-                      <tr key={job.id} className="hover:bg-canvas-soft transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="font-medium text-ink flex items-center gap-2">
-                              <Building2 className="h-3 w-3 text-mute" /> {job.company}
-                            </span>
-                            <span className="text-sm text-body">{job.role}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={getEffectiveStatus(job) as "ongoing" | "applied" | "ghosted" | "rejected"}>
-                            {getEffectiveStatus(job).charAt(0).toUpperCase() + getEffectiveStatus(job).slice(1)}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-sm text-body">
-                            <Calendar className="h-3 w-3 text-mute" /> {job.appliedDate}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="max-w-[200px] text-sm text-body truncate group-hover:whitespace-normal transition-all" title={job.notes}>
-                            {job.notes ? (
-                              <span className="flex items-start gap-2">
-                                <StickyNote className="h-3 w-3 mt-1 text-mute flex-shrink-0" />
-                                {job.notes}
+                  <AnimatePresence mode="popLayout">
+                    {filteredJobs.length > 0 ? (
+                      filteredJobs.map((job) => (
+                        <motion.tr 
+                          layout
+                          key={job.id} 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="hover:bg-canvas-soft transition-colors group"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-medium text-ink flex items-center gap-2">
+                                <Building2 className="h-3 w-3 text-mute" /> {job.company}
                               </span>
-                            ) : (
-                              <span className="text-mute italic">No notes</span>
-                            )}
-                          </div>
+                              <span className="text-sm text-body">{job.role}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant={getEffectiveStatus(job) as "ongoing" | "applied" | "ghosted" | "rejected"}>
+                              {getEffectiveStatus(job).charAt(0).toUpperCase() + getEffectiveStatus(job).slice(1)}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2 text-sm text-body">
+                              <Calendar className="h-3 w-3 text-mute" /> {job.appliedDate}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="max-w-[200px] text-sm text-body truncate group-hover:whitespace-normal transition-all" title={job.notes}>
+                              {job.notes ? (
+                                <span className="flex items-start gap-2">
+                                  <StickyNote className="h-3 w-3 mt-1 text-mute flex-shrink-0" />
+                                  {job.notes}
+                                </span>
+                              ) : (
+                                <span className="text-mute italic">No notes</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2">
+                              {job.socials?.linkedin && (
+                                <a href={job.socials.linkedin} target="_blank" rel="noopener noreferrer" className="text-mute hover:text-ink transition-colors p-1 hover:bg-canvas-soft-2 rounded">
+                                  <Link2 className="h-4 w-4" />
+                                </a>
+                              )}
+                              {job.socials?.email && (
+                                <a href={`mailto:${job.socials.email}`} className="text-mute hover:text-ink transition-colors p-1 hover:bg-canvas-soft-2 rounded">
+                                  <Mail className="h-4 w-4" />
+                                </a>
+                              )}
+                              {job.socials?.x && (
+                                <a href={job.socials.x} target="_blank" rel="noopener noreferrer" className="text-mute hover:text-ink transition-colors p-1 hover:bg-canvas-soft-2 rounded">
+                                  <X className="h-4 w-4" />
+                                </a>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-mute hover:text-ink md:opacity-0 group-hover:opacity-100 transition-all" onClick={() => startEditing(job)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-mute hover:text-error md:opacity-0 group-hover:opacity-100 transition-all" onClick={() => deleteJob(job.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))
+                    ) : (
+                      <motion.tr 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        key="empty"
+                      >
+                        <td colSpan={6} className="px-6 py-12 text-center text-mute italic">
+                          No applications found.
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            {job.socials.linkedin && (
-                              <a href={job.socials.linkedin} target="_blank" rel="noopener noreferrer" className="text-mute hover:text-ink transition-colors p-1 hover:bg-canvas-soft-2 rounded">
-                                <Link2 className="h-4 w-4" />
-                              </a>
-                            )}
-                            {job.socials.email && (
-                              <a href={`mailto:${job.socials.email}`} className="text-mute hover:text-ink transition-colors p-1 hover:bg-canvas-soft-2 rounded">
-                                <Mail className="h-4 w-4" />
-                              </a>
-                            )}
-                            {job.socials.x && (
-                              <a href={job.socials.x} target="_blank" rel="noopener noreferrer" className="text-mute hover:text-ink transition-colors p-1 hover:bg-canvas-soft-2 rounded">
-                                <X className="h-4 w-4" />
-                              </a>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-mute hover:text-ink opacity-0 group-hover:opacity-100 transition-all" onClick={() => startEditing(job)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-mute hover:text-error opacity-0 group-hover:opacity-100 transition-all" onClick={() => deleteJob(job.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-mute italic">
-                        No applications found.
-                      </td>
-                    </tr>
-                  )}
+                      </motion.tr>
+                    )}
+                  </AnimatePresence>
                 </tbody>
               </table>
             </div>
-          </div>
+          </motion.div>
 
           {/* Automation Note */}
-          <div className="mt-8 p-6 rounded-xl border border-hairline bg-link/5 border-link/10">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-8 p-6 rounded-xl border border-hairline bg-link/5 border-link/10"
+          >
             <h3 className="text-sm font-semibold text-link mb-2 flex items-center gap-2">
               <Mail className="h-4 w-4" /> Inbox Sync Active
             </h3>
@@ -545,18 +623,22 @@ export default function Dashboard() {
               We&apos;re monitoring <strong>utkarsh@example.com</strong> for new applications, rejections, and interview invites. 
               Statuses will update automatically as soon as emails arrive.
             </p>
-          </div>
+          </motion.div>
         </div>
-      </main>
+      </motion.main>
     </div>
   )
 }
 
 function StatCard({ label, value }: { label: string, value: string }) {
   return (
-    <div className="p-4 rounded-xl border border-hairline bg-canvas shadow-level-1">
+    <motion.div 
+      variants={item}
+      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+      className="p-4 rounded-xl border border-hairline bg-canvas shadow-level-1"
+    >
       <p className="text-xs font-mono uppercase text-mute mb-1">{label}</p>
       <p className="text-2xl font-bold text-ink">{value}</p>
-    </div>
+    </motion.div>
   )
 }
