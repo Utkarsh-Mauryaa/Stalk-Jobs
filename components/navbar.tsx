@@ -1,8 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { Button } from "./ui/button"
+import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+
+import { APP_NAME } from "@/constants"
 
 export function Navbar() {
   return (
@@ -18,7 +20,7 @@ export function Navbar() {
               whileHover={{ rotate: 90 }}
               className="h-6 w-6 rounded-sm bg-ink transition-colors group-hover:bg-ink/90" 
             />
-            <span className="text-lg font-semibold tracking-tight">Job Stalk</span>
+            <span className="text-lg font-semibold tracking-tight">{APP_NAME}</span>
           </Link>
           <div className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-sm text-body hover:text-ink transition-colors relative group">
