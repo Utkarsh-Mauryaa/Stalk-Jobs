@@ -35,6 +35,7 @@ model Job {
   appliedDate DateTime @default(now())
   notes       String?  @db.Text
   socials     Json?
+  autoGhostDays Int    @default(14) @map("auto_ghost_days")
   
   userId      String   @map("user_id")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)

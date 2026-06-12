@@ -3,7 +3,7 @@
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import { Job } from "@/types/job"
+import { Job, Socials } from "@/types/job"
 
 export async function addJobAction(data: {
   company: string
@@ -11,13 +11,16 @@ export async function addJobAction(data: {
   status: string
   appliedDate: string
   notes?: string
-  socials?: any
+  socials?: Socials
+  autoGhostDays?: number
 }) {
   const session = await auth()
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized")
   }
+
+  const autoGhostDays = data.autoGhostDays !== undefined ? Math.max(7, data.autoGhostDays) : 14
 
   const job = await db.job.create({
     data: {
@@ -27,6 +30,7 @@ export async function addJobAction(data: {
       appliedDate: new Date(data.appliedDate),
       notes: data.notes,
       socials: data.socials,
+      autoGhostDays: autoGhostDays,
       userId: session.user.id,
     },
   })
@@ -58,7 +62,8 @@ export async function getJobsAction() {
     status: job.status as any,
     appliedDate: job.appliedDate.toISOString().split("T")[0],
     notes: job.notes || "",
-    socials: (job.socials as any) || { linkedin: "", email: "", x: "" },
+    socials: (job.socials as unknown as Socials) || { linkedin: "", email: "", x: "" },
+    autoGhostDays: job.autoGhostDays,
   })) as Job[]
 }
 
@@ -81,6 +86,7 @@ export async function updateJobAction(id: string, data: Partial<Job>) {
       appliedDate: data.appliedDate ? new Date(data.appliedDate) : undefined,
       notes: data.notes,
       socials: data.socials,
+      autoGhostDays: data.autoGhostDays !== undefined ? Math.max(7, data.autoGhostDays) : undefined,
     },
   })
 

@@ -7,7 +7,7 @@ import { Mail } from "lucide-react"
 import { useJobs, TODAY } from "@/hooks/use-jobs"
 import { StatCard } from "@/components/stat-card"
 import { JobTable } from "@/components/job-table"
-import { JobDialog } from "@/components/job-dialog"
+import { JobDialog, JobFormData } from "@/components/job-dialog"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardFilters } from "@/components/dashboard-filters"
 import { Job } from "@/types/job"
@@ -30,8 +30,6 @@ export default function Dashboard() {
     statusFilter,
     setStatusFilter,
     sortOrder,
-    ghostDays,
-    setGhostDays,
     stats,
     addJob,
     updateJob,
@@ -44,13 +42,15 @@ export default function Dashboard() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingJob, setEditingJob] = useState<Job | null>(null)
 
-  const handleAddJob = (jobData: Omit<Job, "id">) => {
+  const handleAddJob = (jobData: JobFormData) => {
     addJob(jobData)
     setIsAddOpen(false)
   }
 
-  const handleUpdateJob = (jobData: Job) => {
-    updateJob(jobData)
+  const handleUpdateJob = (formData: JobFormData) => {
+    if (editingJob) {
+      updateJob({ ...formData, id: editingJob.id } as Job)
+    }
     setIsEditOpen(false)
     setEditingJob(null)
   }
@@ -71,8 +71,6 @@ export default function Dashboard() {
       >
         <div className="mx-auto max-w-7xl">
           <DashboardHeader 
-            ghostDays={ghostDays} 
-            setGhostDays={setGhostDays} 
             onAddClick={() => setIsAddOpen(true)} 
           />
 

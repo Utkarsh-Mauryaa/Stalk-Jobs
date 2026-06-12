@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react"
-import { Job } from "@/types/job"
+import { Job, JobStatus, Socials } from "@/types/job"
 import { getJobsAction, addJobAction, updateJobAction, deleteJobAction } from "@/lib/actions/job-actions"
 
 // Use the session date: June 12, 2026 (Today)
@@ -11,7 +11,6 @@ export function useJobs() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
-  const [ghostDays, setGhostDays] = useState(14)
 
   useEffect(() => {
     async function fetchJobs() {
@@ -34,7 +33,8 @@ export function useJobs() {
     const diffTime = TODAY.getTime() - appliedDate.getTime()
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
     
-    if (diffDays > ghostDays || job.status === "ghosted") return "ghosted"
+    const threshold = Math.max(7, job.autoGhostDays || 14)
+    if (diffDays > threshold || job.status === "ghosted") return "ghosted"
     return job.status
   }
 
@@ -55,14 +55,14 @@ export function useJobs() {
         const dateB = new Date(b.appliedDate).getTime()
         return sortOrder === "desc" ? dateB - dateA : dateA - dateB
       })
-  }, [jobs, search, statusFilter, sortOrder, ghostDays])
+  }, [jobs, search, statusFilter, sortOrder])
 
   const stats = useMemo(() => ({
     applied: jobs.length,
     ongoing: jobs.filter(j => getEffectiveStatus(j) === "ongoing").length,
     ghosted: jobs.filter(j => getEffectiveStatus(j) === "ghosted").length,
     rejected: jobs.filter(j => getEffectiveStatus(j) === "rejected").length,
-  }), [jobs, ghostDays])
+  }), [jobs])
 
   const addJob = async (jobData: Omit<Job, "id">) => {
     try {
@@ -71,10 +71,11 @@ export function useJobs() {
         id: newJob.id,
         company: newJob.company,
         role: newJob.role,
-        status: newJob.status as any,
-        appliedDate: newJob.appliedDate.toISOString().split("T")[0],
+        status: newJob.status as JobStatus,
+        appliedDate: new Date(newJob.appliedDate).toISOString().split("T")[0],
         notes: newJob.notes || "",
-        socials: (newJob.socials as any) || { linkedin: "", email: "", x: "" },
+        socials: (newJob.socials as Socials) || { linkedin: "", email: "", x: "" },
+        autoGhostDays: newJob.autoGhostDays,
       }
       setJobs(prev => [formattedJob, ...prev])
     } catch (error) {
@@ -114,8 +115,6 @@ export function useJobs() {
     setStatusFilter,
     sortOrder,
     setSortOrder,
-    ghostDays,
-    setGhostDays,
     stats,
     addJob,
     updateJob,

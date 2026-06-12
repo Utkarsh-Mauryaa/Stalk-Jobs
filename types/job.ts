@@ -14,4 +14,5 @@ export type Job = {
   appliedDate: string;
   socials: Socials;
   notes: string;
+  autoGhostDays: number;
 };

@@ -9,12 +9,22 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog"
-import { Job } from "@/types/job"
+import { Job, JobStatus, Socials } from "@/types/job"
+
+export type JobFormData = {
+  company: string;
+  role: string;
+  status: JobStatus;
+  appliedDate: string;
+  socials: Socials;
+  notes: string;
+  autoGhostDays: number;
+};
 
 interface JobDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (job: any) => void
+  onSubmit: (job: JobFormData) => void
   initialJob?: Job | null
   today: Date
   title: string
@@ -22,13 +32,14 @@ interface JobDialogProps {
 }
 
 export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, title, description }: JobDialogProps) {
-  const [job, setJob] = useState<any>({
+  const [job, setJob] = useState<JobFormData>({
     company: "",
     role: "",
     status: "applied",
     appliedDate: today.toISOString().split("T")[0],
     socials: { linkedin: "", email: "", x: "" },
-    notes: ""
+    notes: "",
+    autoGhostDays: 14
   })
 
   useEffect(() => {
@@ -41,7 +52,8 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
         status: "applied",
         appliedDate: today.toISOString().split("T")[0],
         socials: { linkedin: "", email: "", x: "" },
-        notes: ""
+        notes: "",
+        autoGhostDays: 14
       })
     }
   }, [initialJob, today, open])
@@ -89,7 +101,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
               <select
                 id="status"
                 value={job.status || "applied"}
-                onChange={(e) => setJob({ ...job, status: e.target.value as any })}
+                onChange={(e) => setJob({ ...job, status: e.target.value as JobStatus })}
                 className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
               >
                 <option value="applied">Applied</option>
@@ -109,6 +121,23 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
                 className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
               />
             </div>
+          </div>
+          <div className="grid gap-2">
+            <label htmlFor="autoGhost" className="text-sm font-medium text-ink">Auto Ghost After (days)</label>
+            <input
+              id="autoGhost"
+              type="number"
+              min="7"
+              max="90"
+              required
+              value={job.autoGhostDays === undefined || isNaN(job.autoGhostDays) ? "" : job.autoGhostDays}
+              onChange={(e) => {
+                const val = parseInt(e.target.value)
+                setJob({ ...job, autoGhostDays: isNaN(val) ? 14 : val })
+              }}
+              className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
+              placeholder="e.g. 14"
+            />
           </div>
           <div className="grid gap-2">
             <label htmlFor="notes" className="text-sm font-medium text-ink">Notes</label>
