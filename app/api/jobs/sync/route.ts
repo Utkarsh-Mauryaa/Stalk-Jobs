@@ -16,11 +16,12 @@ export async function POST() {
       count: jobs.length,
       jobs: jobs 
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Sync Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to sync jobs";
     return NextResponse.json({ 
       success: false, 
-      error: error.message || "Failed to sync jobs" 
+      error: errorMessage 
     }, { status: 500 });
   }
 }

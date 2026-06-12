@@ -17,6 +17,7 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
 
   const prompt = `
     Analyze this email metadata and content to extract job application details.
+    Current Date: ${new Date().toISOString().split('T')[0]}
     
     Subject: ${emailSubject}
     From: ${sender}
@@ -28,7 +29,8 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
       "company": string,
       "role": string,
       "status": "applied" | "ongoing" | "rejected",
-      "platform": string
+      "platform": string,
+      "appliedDate": string // format: YYYY-MM-DD, if mentioned in email. If not clearly mentioned, leave empty.
     }
 
     Rules for status:

@@ -5,6 +5,7 @@ import { Building2, Calendar, StickyNote, Link2, Mail, X, Pencil, Trash2 } from 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Job } from "@/types/job"
+import { formatDate } from "@/lib/utils"
 
 interface JobTableProps {
   jobs: Job[]
@@ -65,7 +66,7 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-body">
-                        <Calendar className="h-3 w-3 text-mute" /> {job.appliedDate}
+                        <Calendar className="h-3 w-3 text-mute" /> {formatDate(job.appliedDate)}
                       </div>
                     </td>
                     <td className="px-6 py-4">
