@@ -10,7 +10,7 @@ interface JobTableProps {
   jobs: Job[]
   getEffectiveStatus: (job: Job) => string
   onEdit: (job: Job) => void
-  onDelete: (id: number) => void
+  onDelete: (id: string) => void
 }
 
 export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTableProps) {

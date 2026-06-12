@@ -33,7 +33,7 @@ export function DashboardFilters({
         <input 
           type="text" 
           placeholder="Search by company or role..."
-          value={search}
+          value={search || ""}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full h-10 pl-10 pr-4 rounded-md border border-hairline bg-canvas text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
         />
@@ -46,7 +46,7 @@ export function DashboardFilters({
         <div className="relative flex items-center">
           <Filter className="absolute left-3 h-4 w-4 text-mute pointer-events-none" />
           <select
-            value={statusFilter}
+            value={statusFilter || "all"}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="h-10 pl-10 pr-8 rounded-md border border-hairline bg-canvas text-sm focus:outline-none focus:ring-1 focus:ring-ink/20 appearance-none min-w-[140px] text-ink cursor-pointer hover:bg-canvas-soft transition-colors"
           >

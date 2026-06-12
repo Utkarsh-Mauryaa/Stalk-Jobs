@@ -1,16 +1,31 @@
-import { useState, useMemo } from "react"
-import { Job, JobStatus } from "@/types/job"
-import { INITIAL_JOBS } from "@/constants/jobs"
+import { useState, useMemo, useEffect } from "react"
+import { Job } from "@/types/job"
+import { getJobsAction, addJobAction, updateJobAction, deleteJobAction } from "@/lib/actions/job-actions"
 
-// Use the session date: June 10, 2026
-export const TODAY = new Date("2026-06-10")
+// Use the session date: June 12, 2026 (Today)
+export const TODAY = new Date("2026-06-12")
 
 export function useJobs() {
-  const [jobs, setJobs] = useState<Job[]>(INITIAL_JOBS)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [ghostDays, setGhostDays] = useState(14)
+
+  useEffect(() => {
+    async function fetchJobs() {
+      try {
+        const fetchedJobs = await getJobsAction()
+        setJobs(fetchedJobs)
+      } catch (error) {
+        console.error("Failed to fetch jobs:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchJobs()
+  }, [])
 
   const getEffectiveStatus = (job: Job) => {
     if (job.status === "rejected") return "rejected"
@@ -49,17 +64,40 @@ export function useJobs() {
     rejected: jobs.filter(j => getEffectiveStatus(j) === "rejected").length,
   }), [jobs, ghostDays])
 
-  const addJob = (job: Omit<Job, "id">) => {
-    const id = jobs.length > 0 ? Math.max(...jobs.map(j => j.id)) + 1 : 1
-    setJobs([{ ...job, id }, ...jobs])
+  const addJob = async (jobData: Omit<Job, "id">) => {
+    try {
+      const newJob = await addJobAction(jobData)
+      const formattedJob: Job = {
+        id: newJob.id,
+        company: newJob.company,
+        role: newJob.role,
+        status: newJob.status as any,
+        appliedDate: newJob.appliedDate.toISOString().split("T")[0],
+        notes: newJob.notes || "",
+        socials: (newJob.socials as any) || { linkedin: "", email: "", x: "" },
+      }
+      setJobs(prev => [formattedJob, ...prev])
+    } catch (error) {
+      console.error("Failed to add job:", error)
+    }
   }
 
-  const updateJob = (job: Job) => {
-    setJobs(jobs.map(j => j.id === job.id ? job : j))
+  const updateJob = async (jobData: Job) => {
+    try {
+      await updateJobAction(jobData.id, jobData)
+      setJobs(prev => prev.map(j => j.id === jobData.id ? jobData : j))
+    } catch (error) {
+      console.error("Failed to update job:", error)
+    }
   }
 
-  const deleteJob = (id: number) => {
-    setJobs(jobs.filter(job => job.id !== id))
+  const deleteJob = async (id: string) => {
+    try {
+      await deleteJobAction(id)
+      setJobs(prev => prev.filter(job => job.id !== id))
+    } catch (error) {
+      console.error("Failed to delete job:", error)
+    }
   }
 
   const toggleSort = () => {
@@ -68,6 +106,7 @@ export function useJobs() {
 
   return {
     jobs,
+    loading,
     filteredJobs,
     search,
     setSearch,

@@ -7,7 +7,7 @@ export type Socials = {
 export type JobStatus = "applied" | "ongoing" | "ghosted" | "rejected";
 
 export type Job = {
-  id: number;
+  id: string;
   company: string;
   role: string;
   status: JobStatus;

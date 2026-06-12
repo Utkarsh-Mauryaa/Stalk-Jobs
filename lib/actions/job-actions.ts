@@ -1,0 +1,106 @@
+"use server"
+
+import { auth } from "@/auth"
+import { db } from "@/lib/db"
+import { revalidatePath } from "next/cache"
+import { Job } from "@/types/job"
+
+export async function addJobAction(data: {
+  company: string
+  role: string
+  status: string
+  appliedDate: string
+  notes?: string
+  socials?: any
+}) {
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  const job = await db.job.create({
+    data: {
+      company: data.company,
+      role: data.role,
+      status: data.status,
+      appliedDate: new Date(data.appliedDate),
+      notes: data.notes,
+      socials: data.socials,
+      userId: session.user.id,
+    },
+  })
+
+  revalidatePath("/dashboard")
+  return job
+}
+
+export async function getJobsAction() {
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    return []
+  }
+
+  const jobs = await db.job.findMany({
+    where: {
+      userId: session.user.id,
+    },
+    orderBy: {
+      appliedDate: "desc",
+    },
+  })
+
+  return jobs.map(job => ({
+    id: job.id,
+    company: job.company,
+    role: job.role,
+    status: job.status as any,
+    appliedDate: job.appliedDate.toISOString().split("T")[0],
+    notes: job.notes || "",
+    socials: (job.socials as any) || { linkedin: "", email: "", x: "" },
+  })) as Job[]
+}
+
+export async function updateJobAction(id: string, data: Partial<Job>) {
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  const job = await db.job.update({
+    where: {
+      id,
+      userId: session.user.id,
+    },
+    data: {
+      company: data.company,
+      role: data.role,
+      status: data.status,
+      appliedDate: data.appliedDate ? new Date(data.appliedDate) : undefined,
+      notes: data.notes,
+      socials: data.socials,
+    },
+  })
+
+  revalidatePath("/dashboard")
+  return job
+}
+
+export async function deleteJobAction(id: string) {
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  await db.job.delete({
+    where: {
+      id,
+      userId: session.user.id,
+    },
+  })
+
+  revalidatePath("/dashboard")
+}

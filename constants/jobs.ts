@@ -2,7 +2,7 @@ import { Job } from "@/types/job";
 
 export const INITIAL_JOBS: Job[] = [
   {
-    id: 1,
+    id: "1",
     company: "Vercel",
     role: "Senior Frontend Engineer",
     status: "ongoing",
@@ -11,7 +11,7 @@ export const INITIAL_JOBS: Job[] = [
     notes: "First interview scheduled for next week."
   },
   {
-    id: 2,
+    id: "2",
     company: "Linear",
     role: "Product Designer",
     status: "applied",
@@ -20,7 +20,7 @@ export const INITIAL_JOBS: Job[] = [
     notes: ""
   },
   {
-    id: 3,
+    id: "3",
     company: "Stripe",
     role: "Fullstack Engineer",
     status: "ghosted",
@@ -29,7 +29,7 @@ export const INITIAL_JOBS: Job[] = [
     notes: "Followed up twice, no response."
   },
   {
-    id: 4,
+    id: "4",
     company: "OpenAI",
     role: "AI Research Engineer",
     status: "rejected",
@@ -38,7 +38,7 @@ export const INITIAL_JOBS: Job[] = [
     notes: "Standard rejection email."
   },
   {
-    id: 5,
+    id: "5",
     company: "GitHub",
     role: "Software Engineer",
     status: "ongoing",

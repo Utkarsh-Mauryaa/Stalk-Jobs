@@ -66,7 +66,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
             <input
               id="company"
               required
-              value={job.company}
+              value={job.company || ""}
               onChange={(e) => setJob({ ...job, company: e.target.value })}
               className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
               placeholder="e.g. Vercel"
@@ -77,7 +77,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
             <input
               id="role"
               required
-              value={job.role}
+              value={job.role || ""}
               onChange={(e) => setJob({ ...job, role: e.target.value })}
               className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
               placeholder="e.g. Frontend Engineer"
@@ -88,7 +88,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
               <label htmlFor="status" className="text-sm font-medium text-ink">Status</label>
               <select
                 id="status"
-                value={job.status}
+                value={job.status || "applied"}
                 onChange={(e) => setJob({ ...job, status: e.target.value as any })}
                 className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
               >
@@ -104,7 +104,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
                 id="date"
                 type="date"
                 required
-                value={job.appliedDate}
+                value={job.appliedDate || ""}
                 onChange={(e) => setJob({ ...job, appliedDate: e.target.value })}
                 className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
               />
@@ -114,7 +114,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
             <label htmlFor="notes" className="text-sm font-medium text-ink">Notes</label>
             <textarea
               id="notes"
-              value={job.notes}
+              value={job.notes || ""}
               onChange={(e) => setJob({ ...job, notes: e.target.value })}
               className="min-h-[80px] w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
               placeholder="Add important points..."
@@ -125,19 +125,19 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
               <input
                 placeholder="LinkedIn URL"
-                value={job.socials.linkedin}
+                value={job.socials?.linkedin || ""}
                 onChange={(e) => setJob({ ...job, socials: { ...job.socials, linkedin: e.target.value } })}
                 className="h-9 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ink/20"
               />
               <input
                 placeholder="Recruiter Email"
-                value={job.socials.email}
+                value={job.socials?.email || ""}
                 onChange={(e) => setJob({ ...job, socials: { ...job.socials, email: e.target.value } })}
                 className="h-9 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ink/20"
               />
               <input
                 placeholder="X (Twitter) URL"
-                value={job.socials.x}
+                value={job.socials?.x || ""}
                 onChange={(e) => setJob({ ...job, socials: { ...job.socials, x: e.target.value } })}
                 className="h-9 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ink/20 sm:col-span-2"
               />

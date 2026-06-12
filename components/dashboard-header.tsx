@@ -30,7 +30,7 @@ export function DashboardHeader({ ghostDays, setGhostDays, onAddClick }: Dashboa
           <span>Auto-Ghost after:</span>
           <input 
             type="number" 
-            value={ghostDays}
+            value={ghostDays ?? 0}
             onChange={(e) => setGhostDays(parseInt(e.target.value) || 0)}
             className="w-12 bg-transparent border-none focus:ring-0 font-medium text-ink p-0"
           />

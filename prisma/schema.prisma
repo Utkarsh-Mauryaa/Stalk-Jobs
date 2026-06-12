@@ -19,11 +19,30 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  jobs          Job[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  company     String
+  role        String
+  status      String   @default("applied")
+  appliedDate DateTime @default(now())
+  notes       String?  @db.Text
+  socials     Json?
+  
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("jobs")
 }
 
 model Account {
