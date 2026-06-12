@@ -26,6 +26,7 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
           <thead>
             <tr className="border-b border-hairline bg-canvas-soft-2 text-mute">
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Company & Role</th>
+              <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Platform</th>
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Applied On</th>
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Notes</th>
@@ -53,6 +54,9 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                         </span>
                         <span className="text-sm text-body">{job.role}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-body">{job.platform}</span>
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={getEffectiveStatus(job) as any}>
@@ -114,7 +118,7 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                   exit={{ opacity: 0 }}
                   key="empty"
                 >
-                  <td colSpan={6} className="px-6 py-12 text-center text-mute italic">
+                  <td colSpan={7} className="px-6 py-12 text-center text-mute italic">
                     No applications found.
                   </td>
                 </motion.tr>

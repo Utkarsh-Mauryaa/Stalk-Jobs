@@ -31,6 +31,7 @@ model Job {
   id          String   @id @default(cuid())
   company     String
   role        String
+  platform    String   @default("LinkedIn")
   status      String   @default("applied")
   appliedDate DateTime @default(now())
   notes       String?  @db.Text

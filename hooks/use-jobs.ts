@@ -3,7 +3,8 @@ import { Job, JobStatus, Socials } from "@/types/job"
 import { getJobsAction, addJobAction, updateJobAction, deleteJobAction } from "@/lib/actions/job-actions"
 
 // Use the session date: June 12, 2026 (Today)
-export const TODAY = new Date("2026-06-12")
+export const TODAY_STR = "2026-06-12"
+export const TODAY = new Date(TODAY_STR + "T00:00:00") // Force UTC or local consistently
 
 export function useJobs() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -71,6 +72,7 @@ export function useJobs() {
         id: newJob.id,
         company: newJob.company,
         role: newJob.role,
+        platform: newJob.platform,
         status: newJob.status as JobStatus,
         appliedDate: new Date(newJob.appliedDate).toISOString().split("T")[0],
         notes: newJob.notes || "",

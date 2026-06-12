@@ -14,6 +14,7 @@ import { Job, JobStatus, Socials } from "@/types/job"
 export type JobFormData = {
   company: string;
   role: string;
+  platform: string;
   status: JobStatus;
   appliedDate: string;
   socials: Socials;
@@ -21,46 +22,78 @@ export type JobFormData = {
   autoGhostDays: number;
 };
 
+const PLATFORMS = ["LinkedIn", "Indeed", "Wellfound", "Glassdoor"]
+
 interface JobDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (job: JobFormData) => void
   initialJob?: Job | null
-  today: Date
+  today: string
   title: string
   description: string
 }
 
 export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, title, description }: JobDialogProps) {
+  const [isOtherPlatform, setIsOtherPlatform] = useState(false)
+  const [customPlatform, setCustomPlatform] = useState("")
+  
   const [job, setJob] = useState<JobFormData>({
     company: "",
     role: "",
+    platform: "LinkedIn",
     status: "applied",
-    appliedDate: today.toISOString().split("T")[0],
+    appliedDate: today,
     socials: { linkedin: "", email: "", x: "" },
     notes: "",
     autoGhostDays: 14
   })
 
+  // Sync state when dialog opens or initialJob changes
   useEffect(() => {
+    if (!open) return
+
     if (initialJob) {
-      setJob({ ...initialJob, socials: { ...initialJob.socials } })
+      const isCustom = !PLATFORMS.includes(initialJob.platform)
+      setJob({ 
+        company: initialJob.company,
+        role: initialJob.role,
+        platform: initialJob.platform,
+        status: initialJob.status,
+        appliedDate: initialJob.appliedDate,
+        socials: { 
+          linkedin: initialJob.socials?.linkedin || "", 
+          email: initialJob.socials?.email || "", 
+          x: initialJob.socials?.x || "" 
+        },
+        notes: initialJob.notes || "",
+        autoGhostDays: initialJob.autoGhostDays
+      })
+      setIsOtherPlatform(isCustom)
+      setCustomPlatform(isCustom ? initialJob.platform : "")
     } else {
       setJob({
         company: "",
         role: "",
+        platform: "LinkedIn",
         status: "applied",
-        appliedDate: today.toISOString().split("T")[0],
+        appliedDate: today,
         socials: { linkedin: "", email: "", x: "" },
         notes: "",
         autoGhostDays: 14
       })
+      setIsOtherPlatform(false)
+      setCustomPlatform("")
     }
   }, [initialJob, today, open])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(job)
+    const finalJob = {
+      ...job,
+      platform: isOtherPlatform ? customPlatform : job.platform
+    }
+    onSubmit(finalJob)
   }
 
   return (
@@ -73,28 +106,65 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4 p-6 pt-0">
-          <div className="grid gap-2">
-            <label htmlFor="company" className="text-sm font-medium text-ink">Company</label>
-            <input
-              id="company"
-              required
-              value={job.company || ""}
-              onChange={(e) => setJob({ ...job, company: e.target.value })}
-              className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
-              placeholder="e.g. Vercel"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <label htmlFor="company" className="text-sm font-medium text-ink">Company</label>
+              <input
+                id="company"
+                required
+                value={job.company || ""}
+                onChange={(e) => setJob({ ...job, company: e.target.value })}
+                className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
+                placeholder="e.g. Vercel"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="role" className="text-sm font-medium text-ink">Role</label>
+              <input
+                id="role"
+                required
+                value={job.role || ""}
+                onChange={(e) => setJob({ ...job, role: e.target.value })}
+                className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
+                placeholder="e.g. Frontend Engineer"
+              />
+            </div>
           </div>
+          
           <div className="grid gap-2">
-            <label htmlFor="role" className="text-sm font-medium text-ink">Role</label>
-            <input
-              id="role"
-              required
-              value={job.role || ""}
-              onChange={(e) => setJob({ ...job, role: e.target.value })}
-              className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
-              placeholder="e.g. Frontend Engineer"
-            />
+            <label htmlFor="platform" className="text-sm font-medium text-ink">Platform</label>
+            <div className="flex gap-2">
+              <select
+                id="platform"
+                value={isOtherPlatform ? "Other" : job.platform}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val === "Other") {
+                    setIsOtherPlatform(true)
+                  } else {
+                    setIsOtherPlatform(false)
+                    setJob({ ...job, platform: val })
+                  }
+                }}
+                className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
+              >
+                {PLATFORMS.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+                <option value="Other">Other</option>
+              </select>
+              {isOtherPlatform && (
+                <input
+                  required
+                  placeholder="Platform name"
+                  value={customPlatform}
+                  onChange={(e) => setCustomPlatform(e.target.value)}
+                  className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
+                />
+              )}
+            </div>
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <label htmlFor="status" className="text-sm font-medium text-ink">Status</label>

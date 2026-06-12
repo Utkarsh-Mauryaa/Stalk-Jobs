@@ -10,6 +10,7 @@ export type Job = {
   id: string;
   company: string;
   role: string;
+  platform: string;
   status: JobStatus;
   appliedDate: string;
   socials: Socials;

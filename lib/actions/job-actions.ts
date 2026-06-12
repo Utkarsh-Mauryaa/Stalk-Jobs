@@ -8,6 +8,7 @@ import { Job, Socials } from "@/types/job"
 export async function addJobAction(data: {
   company: string
   role: string
+  platform: string
   status: string
   appliedDate: string
   notes?: string
@@ -26,6 +27,7 @@ export async function addJobAction(data: {
     data: {
       company: data.company,
       role: data.role,
+      platform: data.platform,
       status: data.status,
       appliedDate: new Date(data.appliedDate),
       notes: data.notes,
@@ -59,6 +61,7 @@ export async function getJobsAction() {
     id: job.id,
     company: job.company,
     role: job.role,
+    platform: job.platform,
     status: job.status as any,
     appliedDate: job.appliedDate.toISOString().split("T")[0],
     notes: job.notes || "",
@@ -82,6 +85,7 @@ export async function updateJobAction(id: string, data: Partial<Job>) {
     data: {
       company: data.company,
       role: data.role,
+      platform: data.platform,
       status: data.status,
       appliedDate: data.appliedDate ? new Date(data.appliedDate) : undefined,
       notes: data.notes,

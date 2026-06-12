@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { motion } from "framer-motion"
 import { Mail } from "lucide-react"
-import { useJobs, TODAY } from "@/hooks/use-jobs"
+import { useJobs, TODAY_STR } from "@/hooks/use-jobs"
 import { StatCard } from "@/components/stat-card"
 import { JobTable } from "@/components/job-table"
 import { JobDialog, JobFormData } from "@/components/job-dialog"
@@ -78,7 +78,7 @@ export default function Dashboard() {
             open={isAddOpen} 
             onOpenChange={setIsAddOpen} 
             onSubmit={handleAddJob}
-            today={TODAY}
+            today={TODAY_STR}
             title="Add New Application"
             description="Enter the details of the job you've applied for."
           />
@@ -88,7 +88,7 @@ export default function Dashboard() {
             onOpenChange={setIsEditOpen} 
             onSubmit={handleUpdateJob}
             initialJob={editingJob}
-            today={TODAY}
+            today={TODAY_STR}
             title="Edit Application"
             description="Update the details of your application."
           />
