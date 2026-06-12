@@ -50,7 +50,7 @@ export function Navbar() {
                 variant="primary" 
                 size="sm" 
                 className="rounded-sm"
-                onClick={() => signOut()}
+                onClick={() => signOut({ callbackUrl: "/" })}
               >
                 Log Out
               </Button>
