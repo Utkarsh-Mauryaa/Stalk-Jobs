@@ -1,20 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Mail, ShieldCheck, ArrowRight, Loader2 } from "lucide-react"
+import { Mail, ShieldCheck, ArrowRight, Loader2, RefreshCw, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signIn } from "next-auth/react"
 
 export function EmailTrackingCard() {
-  const [isEnabled, setIsEnabled] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'syncing' | 'synced'>('idle')
+  const [syncCount, setSyncCount] = useState(0)
+
+  useEffect(() => {
+    // Check if we are already connected on mount
+    async function checkConnection() {
+      try {
+        const res = await fetch('/api/auth/check-gmail')
+        const data = await res.json()
+        if (data.connected) {
+          setStatus('connected')
+        }
+      } catch (e) {
+        console.error("Failed to check connection", e)
+      }
+    }
+    checkConnection()
+  }, [])
 
   const handleEnable = async () => {
-    setIsLoading(true)
+    setStatus('loading')
     try {
-      // In NextAuth v5 (Auth.js), the signIn function from next-auth/react takes:
-      // (providerId, options, authorizationParams)
       await signIn("google", 
         { callbackUrl: "/dashboard" }, 
         { 
@@ -25,7 +39,26 @@ export function EmailTrackingCard() {
       )
     } catch (error) {
       console.error("Sign in failed:", error)
-      setIsLoading(false)
+      setStatus('idle')
+    }
+  }
+
+  const handleSync = async () => {
+    setStatus('syncing')
+    try {
+      const res = await fetch('/api/jobs/sync', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setSyncCount(data.count)
+        setStatus('synced')
+        // Refresh the page to show new jobs after a short delay
+        setTimeout(() => window.location.reload(), 2000)
+      } else {
+        setStatus('connected')
+      }
+    } catch (e) {
+      console.error("Sync failed", e)
+      setStatus('connected')
     }
   }
 
@@ -38,7 +71,7 @@ export function EmailTrackingCard() {
       <div className="flex flex-col md:flex-row">
         <div className="flex-1 p-8">
           <AnimatePresence mode="wait">
-            {!isEnabled ? (
+            {status === 'idle' || status === 'loading' ? (
               <motion.div
                 key="disabled"
                 initial={{ opacity: 0, x: -20 }}
@@ -71,10 +104,10 @@ export function EmailTrackingCard() {
 
                 <Button 
                   onClick={handleEnable} 
-                  disabled={isLoading}
+                  disabled={status === 'loading'}
                   className="bg-ink text-canvas hover:bg-ink/90 px-6"
                 >
-                  {isLoading ? (
+                  {status === 'loading' ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Connecting...
@@ -95,13 +128,32 @@ export function EmailTrackingCard() {
                 className="flex flex-col items-center justify-center py-4 text-center"
               >
                 <div className="mb-4 p-3 rounded-full bg-success/10 border border-success/20">
-                  <ShieldCheck className="h-8 w-8 text-success" />
+                  <CheckCircle2 className="h-8 w-8 text-success" />
                 </div>
-                <h3 className="text-xl font-bold text-ink mb-2">Email Tracking Started</h3>
-                <p className="text-body max-w-md">
-                  We&apos;re now monitoring your inbox for job-related updates. 
-                  Sit back and watch your dashboard stay up to date.
+                <h3 className="text-xl font-bold text-ink mb-2">
+                  {status === 'connected' ? 'Email Tracking Active' : 
+                   status === 'syncing' ? 'Syncing Inbox...' : 
+                   `Found ${syncCount} New Applications!`}
+                </h3>
+                <p className="text-body max-w-md mb-6">
+                  {status === 'connected' ? "We're ready to scan your inbox for job updates." : 
+                   status === 'syncing' ? "This may take a few seconds while we parse your emails." :
+                   "Your dashboard is being updated with the latest entries."}
                 </p>
+                
+                {status === 'connected' && (
+                  <Button onClick={handleSync} variant="outline" className="border-hairline hover:bg-canvas-soft">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Sync Now
+                  </Button>
+                )}
+                
+                {status === 'syncing' && (
+                  <div className="flex items-center gap-2 text-mute text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Checking for updates...
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
