@@ -79,29 +79,59 @@ export async function syncGmailJobs(userId: string) {
     const parsed = parseJobEmail(subject, body, from);
     
     if (parsed) {
-      console.log(`Sync: SUCCESS! Parsed as ${parsed.role} @ ${parsed.company}`);
-      parsed.appliedDate = date; // Use the actual email date
-      
-      // Check for duplicates before adding
+      parsed.company = parsed.company.trim(); // Ensure no trailing spaces
+      console.log(`Sync: Parsed email. Role: "${parsed.role}", Company: "${parsed.company}"`);
+      parsed.appliedDate = date; 
+      // 1. LOOK FOR EXISTING MATCH
+      // We look for any job at the same company for this user
+      // We use a slightly more flexible match to handle variations
       const existing = await db.job.findFirst({
         where: {
           userId,
-          company: parsed.company,
-          role: parsed.role,
+          OR: [
+            { company: { equals: parsed.company, mode: 'insensitive' } },
+            { company: { contains: parsed.company, mode: 'insensitive' } }
+          ]
+        },
+        orderBy: {
+          appliedDate: 'desc'
         }
       });
 
-      if (!existing) {
+      console.log(`Sync: Database lookup for "${parsed.company}" returned: ${existing ? `Match Found (ID: ${existing.id}, Company in DB: "${existing.company}", Status: ${existing.status})` : 'No Match Found'}`);
+
+
+      if (existing) {
+        // If we found an existing application for this company
+        // and the new email suggests a status change, update it.
+        const shouldUpdateStatus = 
+          (existing.status === "applied" && (parsed.status === "ongoing" || parsed.status === "rejected")) ||
+          (existing.status === "ongoing" && parsed.status === "rejected");
+
+        if (shouldUpdateStatus) {
+          await db.job.update({
+            where: { id: existing.id },
+            data: { 
+              status: parsed.status,
+              // Optionally update the role if the original was "Unknown" or generic
+              role: existing.role === "Unknown Position" ? parsed.role : existing.role
+            }
+          });
+          console.log(`Sync: Updated status of existing ${parsed.company} job to ${parsed.status}`);
+          processedJobs.push({ ...parsed, company: existing.company, role: existing.role });
+        } else {
+          console.log(`Sync: Existing ${parsed.company} job is already up to date`);
+        }
+      } else {
+        // 2. CREATE NEW ENTRY
         await db.job.create({
           data: {
             ...parsed,
             userId,
           }
         });
-        console.log(`Sync: Inserted into DB`);
+        console.log(`Sync: Inserted new job for ${parsed.company} into DB`);
         processedJobs.push(parsed);
-      } else {
-        console.log(`Sync: Duplicate found, skipping`);
       }
     } else {
       console.log(`Sync: FAILED to parse this email`);
