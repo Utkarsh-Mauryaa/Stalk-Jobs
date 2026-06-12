@@ -4,8 +4,14 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { signIn, signOut, useSession } from "next-auth/react"
+import dynamic from "next/dynamic"
 
 import { APP_NAME } from "@/constants"
+
+const ThemeToggle = dynamic(() => import("@/components/theme-toggle").then(mod => mod.ThemeToggle), {
+  ssr: false,
+  loading: () => <div className="h-8 w-8 rounded-sm bg-hairline animate-pulse" />
+})
 
 export function Navbar() {
   const { data: session, status } = useSession()
@@ -39,6 +45,8 @@ export function Navbar() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <div className="h-4 w-[1px] bg-hairline mx-1" />
           {status === "loading" ? (
             <div className="h-8 w-20 animate-pulse rounded-sm bg-hairline" />
           ) : session ? (

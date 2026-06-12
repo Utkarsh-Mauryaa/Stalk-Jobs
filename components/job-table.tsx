@@ -60,7 +60,7 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                       <span className="text-sm text-body">{job.platform}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={getEffectiveStatus(job) as any}>
+                      <Badge variant={getEffectiveStatus(job) as "applied" | "ongoing" | "ghosted" | "rejected" | "default"}>
                         {getEffectiveStatus(job).charAt(0).toUpperCase() + getEffectiveStatus(job).slice(1)}
                       </Badge>
                     </td>

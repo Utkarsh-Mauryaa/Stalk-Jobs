@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Colors */
   --color-ink: #171717;
@@ -50,19 +52,19 @@
   --selection-fg: #f2f2f2;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #000000;
-    --foreground: #ffffff;
-    --color-canvas: #000000;
-    --color-canvas-soft: #0a0a0a;
-    --color-canvas-soft-2: #111111;
-    --color-ink: #ffffff;
-    --color-hairline: #333333;
-    --color-hairline-strong: #444444;
-    --color-body: #a1a1a1;
-    --color-mute: #666666;
-  }
+.dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --color-canvas: #000000;
+  --color-canvas-soft: #0a0a0a;
+  --color-canvas-soft-2: #111111;
+  --color-ink: #ffffff;
+  --color-hairline: #333333;
+  --color-hairline-strong: #444444;
+  --color-body: #a1a1a1;
+  --color-mute: #666666;
+  --selection-bg: #ffffff;
+  --selection-fg: #000000;
 }
 
 * {

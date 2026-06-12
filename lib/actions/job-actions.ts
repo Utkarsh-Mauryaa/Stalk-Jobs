@@ -3,7 +3,7 @@
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import { Job, Socials } from "@/types/job"
+import { Job, Socials, JobStatus } from "@/types/job"
 
 export async function addJobAction(data: {
   company: string
@@ -62,7 +62,7 @@ export async function getJobsAction() {
     company: job.company,
     role: job.role,
     platform: job.platform,
-    status: job.status as any,
+    status: job.status as JobStatus,
     appliedDate: job.appliedDate.toISOString().split("T")[0],
     notes: job.notes || "",
     socials: (job.socials as unknown as Socials) || { linkedin: "", email: "", x: "" },

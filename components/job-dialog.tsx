@@ -53,38 +53,40 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
   useEffect(() => {
     if (!open) return
 
-    if (initialJob) {
-      const isCustom = !PLATFORMS.includes(initialJob.platform)
-      setJob({ 
-        company: initialJob.company,
-        role: initialJob.role,
-        platform: initialJob.platform,
-        status: initialJob.status,
-        appliedDate: initialJob.appliedDate,
-        socials: { 
-          linkedin: initialJob.socials?.linkedin || "", 
-          email: initialJob.socials?.email || "", 
-          x: initialJob.socials?.x || "" 
-        },
-        notes: initialJob.notes || "",
-        autoGhostDays: initialJob.autoGhostDays
-      })
-      setIsOtherPlatform(isCustom)
-      setCustomPlatform(isCustom ? initialJob.platform : "")
-    } else {
-      setJob({
-        company: "",
-        role: "",
-        platform: "LinkedIn",
-        status: "applied",
-        appliedDate: today,
-        socials: { linkedin: "", email: "", x: "" },
-        notes: "",
-        autoGhostDays: 14
-      })
-      setIsOtherPlatform(false)
-      setCustomPlatform("")
-    }
+    requestAnimationFrame(() => {
+      if (initialJob) {
+        const isCustom = !PLATFORMS.includes(initialJob.platform)
+        setJob({ 
+          company: initialJob.company,
+          role: initialJob.role,
+          platform: initialJob.platform,
+          status: initialJob.status,
+          appliedDate: initialJob.appliedDate,
+          socials: { 
+            linkedin: initialJob.socials?.linkedin || "", 
+            email: initialJob.socials?.email || "", 
+            x: initialJob.socials?.x || "" 
+          },
+          notes: initialJob.notes || "",
+          autoGhostDays: initialJob.autoGhostDays
+        })
+        setIsOtherPlatform(isCustom)
+        setCustomPlatform(isCustom ? initialJob.platform : "")
+      } else {
+        setJob({
+          company: "",
+          role: "",
+          platform: "LinkedIn",
+          status: "applied",
+          appliedDate: today,
+          socials: { linkedin: "", email: "", x: "" },
+          notes: "",
+          autoGhostDays: 14
+        })
+        setIsOtherPlatform(false)
+        setCustomPlatform("")
+      }
+    })
   }, [initialJob, today, open])
 
   const handleSubmit = (e: React.FormEvent) => {
