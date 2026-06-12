@@ -12,17 +12,21 @@ export function EmailTrackingCard() {
 
   const handleEnable = async () => {
     setIsLoading(true)
-    // In a real scenario, this would trigger the OAuth flow with the specific scope
-    // For now, we simulate the "Started" state as requested.
-    // We will use the signIn function with the specific scope when ready.
-    
-    // simulate delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    setIsEnabled(true)
-    setIsLoading(false)
-    
-    // This is where we would eventually call:
-    // signIn("google", { scope: "https://www.googleapis.com/auth/gmail.readonly" })
+    try {
+      // In NextAuth v5 (Auth.js), the signIn function from next-auth/react takes:
+      // (providerId, options, authorizationParams)
+      await signIn("google", 
+        { callbackUrl: "/dashboard" }, 
+        { 
+          scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly", 
+          prompt: "consent",
+          access_type: "offline"
+        }
+      )
+    } catch (error) {
+      console.error("Sign in failed:", error)
+      setIsLoading(false)
+    }
   }
 
   return (
