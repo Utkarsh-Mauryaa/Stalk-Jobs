@@ -3,13 +3,13 @@
 import { useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { motion } from "framer-motion"
-import { Mail } from "lucide-react"
 import { useJobs, TODAY_STR } from "@/hooks/use-jobs"
 import { StatCard } from "@/components/stat-card"
 import { JobTable } from "@/components/job-table"
 import { JobDialog, JobFormData } from "@/components/job-dialog"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardFilters } from "@/components/dashboard-filters"
+import { EmailTrackingCard } from "@/components/email-tracking-card"
 import { Job } from "@/types/job"
 
 const container = {
@@ -122,21 +122,7 @@ export default function Dashboard() {
             onDelete={deleteJob}
           />
 
-          {/* Automation Note */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="mt-8 p-6 rounded-xl border border-hairline bg-link/5 border-link/10"
-          >
-            <h3 className="text-sm font-semibold text-link mb-2 flex items-center gap-2">
-              <Mail className="h-4 w-4" /> Inbox Sync Active
-            </h3>
-            <p className="text-sm text-body leading-relaxed">
-              We&apos;re monitoring <strong>utkarsh@example.com</strong> for new applications, rejections, and interview invites. 
-              Statuses will update automatically as soon as emails arrive.
-            </p>
-          </motion.div>
+          <EmailTrackingCard />
         </div>
       </motion.main>
     </div>
