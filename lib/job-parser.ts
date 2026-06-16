@@ -1,4 +1,4 @@
-import { parseJobWithAI } from "./gemini";
+import { parseJobWithAI } from "./ai";
 
 export interface ParsedJob {
   company: string;
@@ -7,11 +7,12 @@ export interface ParsedJob {
   status: "applied" | "ongoing" | "rejected";
   appliedDate: Date;
   notes?: string;
+  contactEmail?: string | null;
 }
 
 /**
  * AI-powered email parser.
- * Replaces old regex logic with Gemini Flash for high-accuracy extraction.
+ * Replaces old regex logic with AI for high-accuracy extraction.
  */
 export async function parseJobEmail(subject: string, body: string, sender: string, fallbackDate?: Date): Promise<ParsedJob | null> {
   // Use AI to extract structured data
@@ -30,6 +31,7 @@ export async function parseJobEmail(subject: string, body: string, sender: strin
     platform: aiResult.platform || "Direct",
     status: aiResult.status || "applied",
     appliedDate: isValidDate ? extractedDate : (fallbackDate || new Date()), 
-    notes: `Automatically parsed via StalkJobs AI`
+    notes: `Automatically parsed via StalkJobs AI`,
+    contactEmail: aiResult.contactEmail
   };
 }

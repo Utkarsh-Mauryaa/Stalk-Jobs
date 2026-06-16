@@ -10,7 +10,10 @@ export const INITIAL_JOBS: Job[] = [
     appliedDate: "2026-06-05",
     socials: { linkedin: "https://linkedin.com", email: "hiring@vercel.com", x: "https://x.com" },
     notes: "First interview scheduled for next week.",
-    autoGhostDays: 14
+    autoGhostDays: 14,
+    interactionCount: 1,
+    lastInteractionAt: "2026-06-05T10:00:00Z",
+    processedMessageIds: [],
   },
   {
     id: "2",
@@ -21,7 +24,10 @@ export const INITIAL_JOBS: Job[] = [
     appliedDate: "2026-06-01",
     socials: { linkedin: "https://linkedin.com", email: "jobs@linear.app" },
     notes: "",
-    autoGhostDays: 14
+    autoGhostDays: 14,
+    interactionCount: 1,
+    lastInteractionAt: "2026-06-01T09:30:00Z",
+    processedMessageIds: [],
   },
   {
     id: "3",
@@ -32,7 +38,10 @@ export const INITIAL_JOBS: Job[] = [
     appliedDate: "2026-05-15",
     socials: { linkedin: "https://linkedin.com", x: "https://x.com" },
     notes: "Followed up twice, no response.",
-    autoGhostDays: 14
+    autoGhostDays: 14,
+    interactionCount: 3,
+    lastInteractionAt: "2026-05-25T14:20:00Z",
+    processedMessageIds: [],
   },
   {
     id: "4",
@@ -43,7 +52,10 @@ export const INITIAL_JOBS: Job[] = [
     appliedDate: "2026-05-10",
     socials: { linkedin: "https://linkedin.com", x: "https://x.com" },
     notes: "Standard rejection email.",
-    autoGhostDays: 14
+    autoGhostDays: 14,
+    interactionCount: 2,
+    lastInteractionAt: "2026-05-12T11:05:00Z",
+    processedMessageIds: [],
   },
   {
     id: "5",
@@ -54,6 +66,9 @@ export const INITIAL_JOBS: Job[] = [
     appliedDate: "2026-06-08",
     socials: { linkedin: "https://linkedin.com", email: "recruiting@github.com" },
     notes: "",
-    autoGhostDays: 14
+    autoGhostDays: 14,
+    interactionCount: 1,
+    lastInteractionAt: "2026-06-08T16:45:00Z",
+    processedMessageIds: [],
   }
 ];

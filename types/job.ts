@@ -16,4 +16,9 @@ export type Job = {
   socials: Socials;
   notes: string;
   autoGhostDays: number;
+  interactionCount: number;
+  lastInteractionAt: string;
+  contactEmail?: string | null;
+  processedMessageIds: string[];
+  threadId?: string | null;
 };

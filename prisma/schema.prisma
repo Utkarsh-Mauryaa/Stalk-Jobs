@@ -38,6 +38,12 @@ model Job {
   socials     Json?
   autoGhostDays Int    @default(14) @map("auto_ghost_days")
   
+  interactionCount   Int      @default(1) @map("interaction_count")
+  lastInteractionAt DateTime @default(now()) @map("last_interaction_at")
+  contactEmail       String?  @map("contact_email")
+  processedMessageIds String[] @default([]) @map("processed_message_ids")
+  threadId           String?  @map("thread_id")
+
   userId      String   @map("user_id")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

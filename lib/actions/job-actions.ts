@@ -14,6 +14,7 @@ export async function addJobAction(data: {
   notes?: string
   socials?: Socials
   autoGhostDays?: number
+  contactEmail?: string | null
 }) {
   const session = await auth()
 
@@ -34,6 +35,9 @@ export async function addJobAction(data: {
       socials: data.socials,
       autoGhostDays: autoGhostDays,
       userId: session.user.id,
+      contactEmail: data.contactEmail,
+      interactionCount: 1,
+      lastInteractionAt: new Date(),
     },
   })
 
@@ -67,6 +71,11 @@ export async function getJobsAction() {
     notes: job.notes || "",
     socials: (job.socials as unknown as Socials) || { linkedin: "", email: "", x: "" },
     autoGhostDays: job.autoGhostDays,
+    interactionCount: job.interactionCount,
+    lastInteractionAt: job.lastInteractionAt.toISOString(),
+    contactEmail: job.contactEmail,
+    processedMessageIds: job.processedMessageIds,
+    threadId: job.threadId,
   })) as Job[]
 }
 
@@ -91,6 +100,10 @@ export async function updateJobAction(id: string, data: Partial<Job>) {
       notes: data.notes,
       socials: data.socials,
       autoGhostDays: data.autoGhostDays !== undefined ? Math.max(7, data.autoGhostDays) : undefined,
+      interactionCount: data.interactionCount,
+      lastInteractionAt: data.lastInteractionAt ? new Date(data.lastInteractionAt) : undefined,
+      contactEmail: data.contactEmail,
+      threadId: data.threadId,
     },
   })
 

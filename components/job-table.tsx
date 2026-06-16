@@ -29,6 +29,7 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Company & Role</th>
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Platform</th>
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Interactions</th>
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Applied On</th>
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Notes</th>
               <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Socials</th>
@@ -63,6 +64,25 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                       <Badge variant={getEffectiveStatus(job) as "applied" | "ongoing" | "ghosted" | "rejected" | "default"}>
                         {getEffectiveStatus(job).charAt(0).toUpperCase() + getEffectiveStatus(job).slice(1)}
                       </Badge>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-ink font-medium">{job.interactionCount || 1} emails</span>
+                          {job.threadId && (
+                            <a 
+                              href={`https://mail.google.com/mail/u/0/#all/${job.threadId}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-mute hover:text-ink transition-colors"
+                              title="Open in Gmail"
+                            >
+                              <Mail className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                        <span className="text-xs text-mute">Last: {formatDate(job.lastInteractionAt)}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-body">
@@ -119,7 +139,7 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                   exit={{ opacity: 0 }}
                   key="empty"
                 >
-                  <td colSpan={7} className="px-6 py-12 text-center text-mute italic">
+                  <td colSpan={8} className="px-6 py-12 text-center text-mute italic">
                     No applications found.
                   </td>
                 </motion.tr>

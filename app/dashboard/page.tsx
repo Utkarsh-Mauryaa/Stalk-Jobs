@@ -43,13 +43,21 @@ export default function Dashboard() {
   const [editingJob, setEditingJob] = useState<Job | null>(null)
 
   const handleAddJob = (jobData: JobFormData) => {
-    addJob(jobData)
+    addJob({
+      ...jobData,
+      interactionCount: 1,
+      lastInteractionAt: new Date().toISOString(),
+      processedMessageIds: [],
+    })
     setIsAddOpen(false)
   }
 
   const handleUpdateJob = (formData: JobFormData) => {
     if (editingJob) {
-      updateJob({ ...formData, id: editingJob.id } as Job)
+      updateJob({ 
+        ...editingJob,
+        ...formData, 
+      })
     }
     setIsEditOpen(false)
     setEditingJob(null)

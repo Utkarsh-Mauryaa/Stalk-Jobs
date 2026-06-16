@@ -27,9 +27,16 @@ export async function syncGmailJobs(userId: string) {
     throw new Error("No Google account connected");
   }
 
-  // 1. DEBUG: Broadest possible search (No filters, last 5 messages)
-  console.log("Sync: Searching for last 5 messages with NO filter for deep debug...");
-  const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5`;
+  // 1. Fetch all processed message IDs for this user to avoid double processing
+  const userJobs = await db.job.findMany({
+    where: { userId },
+    select: { processedMessageIds: true }
+  });
+  const allProcessedIds = new Set(userJobs.flatMap(j => j.processedMessageIds));
+
+  // 2. Search for job-related emails
+  const query = "subject:(application OR interview OR recruiter OR hired OR position OR role OR job)";
+  const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=50`;
 
   const searchResponse = await fetch(searchUrl, {
     headers: { Authorization: `Bearer ${account.access_token}` },
@@ -41,15 +48,14 @@ export async function syncGmailJobs(userId: string) {
 
   const searchData = await searchResponse.json();
   const messages: GmailMessage[] = searchData.messages || [];
-  console.log(`Sync: Found ${messages.length} potential job emails to analyze with AI`);
+  
+  const newMessages = messages.filter(m => !allProcessedIds.has(m.id));
+  console.log(`Sync: Found ${messages.length} total, ${newMessages.length} new job emails to analyze`);
 
-  // Process messages in chronological order (oldest first) 
-  // so that the most recent status update wins.
-  const chronologicalMessages = [...messages].reverse();
-
+  const chronologicalMessages = [...newMessages].reverse();
   const processedJobs: ParsedJob[] = [];
 
-  // 2. Process each message with AI
+  // 3. Process each message
   for (const msg of chronologicalMessages) {
     const detailUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`;
     const detailResponse = await fetch(detailUrl, {
@@ -65,29 +71,25 @@ export async function syncGmailJobs(userId: string) {
     const date = new Date(parseInt(fullMsg.internalDate));
     const snippet = fullMsg.snippet || "";
 
-    // For AI, the snippet is often enough, but we try to get body parts if available
     let bodyContent = snippet;
     if (fullMsg.payload.parts) {
       const parts: GmailPart[] = fullMsg.payload.parts;
       const textPart = parts.find((p) => p.mimeType === "text/plain");
       if (textPart && textPart.body.data) {
-        bodyContent = Buffer.from(textPart.body.data, "base64").toString().substring(0, 1000);
+        const base64 = textPart.body.data.replace(/-/g, '+').replace(/_/g, '/');
+        bodyContent = Buffer.from(base64, "base64").toString("utf-8").substring(0, 1500);
       }
     }
 
-    // Call our new async AI parser
     const parsed = await parseJobEmail(subject, bodyContent, from, date);
     
     if (parsed) {
-      console.log(`AI Sync: Successfully identified ${parsed.role} at ${parsed.company} (${parsed.status})`);
-      
       const existing = await db.job.findFirst({
         where: {
           userId,
           company: { equals: parsed.company, mode: 'insensitive' },
           role: { equals: parsed.role, mode: 'insensitive' }
-        },
-        orderBy: { appliedDate: 'desc' }
+        }
       });
 
       if (existing) {
@@ -95,17 +97,34 @@ export async function syncGmailJobs(userId: string) {
           (existing.status === "applied" && (parsed.status === "ongoing" || parsed.status === "rejected")) ||
           (existing.status === "ongoing" && parsed.status === "rejected");
 
-        if (shouldUpdateStatus) {
-          await db.job.update({
-            where: { id: existing.id },
-            data: { status: parsed.status }
-          });
-          processedJobs.push({ ...parsed, company: existing.company, role: existing.role });
-        }
+        await db.job.update({
+          where: { id: existing.id },
+          data: { 
+            status: shouldUpdateStatus ? parsed.status : existing.status,
+            interactionCount: { increment: 1 },
+            lastInteractionAt: date,
+            processedMessageIds: { push: msg.id },
+            contactEmail: parsed.contactEmail || existing.contactEmail,
+            threadId: fullMsg.threadId || existing.threadId
+          }
+        });
+        processedJobs.push({ ...parsed, company: existing.company, role: existing.role });
       } else {
-        // Create job regardless of status (applied, ongoing, or rejected)
         await db.job.create({
-          data: { ...parsed, userId }
+          data: { 
+            company: parsed.company,
+            role: parsed.role,
+            platform: parsed.platform,
+            status: parsed.status,
+            appliedDate: parsed.appliedDate,
+            notes: parsed.notes,
+            contactEmail: parsed.contactEmail,
+            userId,
+            processedMessageIds: [msg.id],
+            interactionCount: 1,
+            lastInteractionAt: date,
+            threadId: fullMsg.threadId
+          }
         });
         processedJobs.push(parsed);
       }

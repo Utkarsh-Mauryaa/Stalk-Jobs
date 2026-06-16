@@ -78,6 +78,11 @@ export function useJobs() {
         notes: newJob.notes || "",
         socials: (newJob.socials as Socials) || { linkedin: "", email: "", x: "" },
         autoGhostDays: newJob.autoGhostDays,
+        interactionCount: newJob.interactionCount,
+        lastInteractionAt: newJob.lastInteractionAt.toISOString(),
+        contactEmail: newJob.contactEmail,
+        processedMessageIds: newJob.processedMessageIds,
+        threadId: newJob.threadId,
       }
       setJobs(prev => [formattedJob, ...prev])
     } catch (error) {
