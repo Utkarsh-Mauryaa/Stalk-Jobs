@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { syncGmailJobs } from "@/lib/gmail-service";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 export async function POST() {
   const session = await auth();
@@ -11,6 +12,10 @@ export async function POST() {
 
   try {
     const jobs = await syncGmailJobs(session.user.id);
+    
+    // Revalidate the dashboard path so fresh data is fetched
+    revalidatePath("/dashboard");
+    
     return NextResponse.json({ 
       success: true, 
       count: jobs.length,

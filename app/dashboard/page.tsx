@@ -35,7 +35,8 @@ export default function Dashboard() {
     updateJob,
     deleteJob,
     toggleSort,
-    getEffectiveStatus
+    getEffectiveStatus,
+    refreshJobs
   } = useJobs()
 
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -130,7 +131,7 @@ export default function Dashboard() {
             onDelete={deleteJob}
           />
 
-          <EmailTrackingCard />
+          <EmailTrackingCard onRefresh={refreshJobs} />
         </div>
       </motion.main>
     </div>

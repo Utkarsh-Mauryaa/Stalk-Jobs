@@ -15,6 +15,28 @@ export interface ParsedJob {
  * Replaces old regex logic with AI for high-accuracy extraction.
  */
 export async function parseJobEmail(subject: string, body: string, sender: string, fallbackDate?: Date): Promise<ParsedJob | null> {
+  // Quick heuristic check to filter out obvious recommendations/alerts
+  const lowerSubject = subject.toLowerCase();
+  const lowerBody = body.toLowerCase();
+  
+  const isRecommendation = 
+    lowerSubject.includes("jobs you might like") ||
+    lowerSubject.includes("recommended jobs") ||
+    lowerSubject.includes("new jobs matching") ||
+    lowerSubject.includes("job alert") ||
+    lowerSubject.includes("potential candidate") ||
+    lowerSubject.includes("new jobs for you") ||
+    lowerSubject.includes("recommended jobs for you") ||
+    lowerBody.includes("based on your profile") ||
+    lowerBody.includes("we thought you might be interested") ||
+    lowerBody.includes("you'd be a great fit for these jobs") ||
+    lowerBody.includes("suggested for you") ||
+    lowerBody.includes("view more jobs");
+
+  if (isRecommendation && !lowerSubject.includes("application")) {
+    return null;
+  }
+
   // Use AI to extract structured data
   const aiResult = await parseJobWithAI(subject, body, sender);
 

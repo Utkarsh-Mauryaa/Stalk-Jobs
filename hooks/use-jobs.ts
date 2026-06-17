@@ -13,17 +13,19 @@ export function useJobs() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
-  useEffect(() => {
-    async function fetchJobs() {
-      try {
-        const fetchedJobs = await getJobsAction()
-        setJobs(fetchedJobs)
-      } catch (error) {
-        console.error("Failed to fetch jobs:", error)
-      } finally {
-        setLoading(false)
-      }
+  const fetchJobs = async () => {
+    try {
+      setLoading(true)
+      const fetchedJobs = await getJobsAction()
+      setJobs(fetchedJobs)
+    } catch (error) {
+      console.error("Failed to fetch jobs:", error)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchJobs()
   }, [])
 
@@ -127,6 +129,7 @@ export function useJobs() {
     updateJob,
     deleteJob,
     toggleSort,
-    getEffectiveStatus
+    getEffectiveStatus,
+    refreshJobs: fetchJobs
   }
 }

@@ -6,9 +6,14 @@ import { Mail, ShieldCheck, ArrowRight, Loader2, RefreshCw, CheckCircle2 } from 
 import { Button } from "@/components/ui/button"
 import { signIn } from "next-auth/react"
 
-export function EmailTrackingCard() {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'syncing' | 'synced'>('idle')
+interface EmailTrackingCardProps {
+  onRefresh?: () => void
+}
+
+export function EmailTrackingCard({ onRefresh }: EmailTrackingCardProps) {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'syncing' | 'synced' | 'error'>('idle')
   const [syncCount, setSyncCount] = useState(0)
+  const [errorMessage, setErrorMessage] = useState<string>("")
 
   useEffect(() => {
     // Check if we are already connected on mount
@@ -45,20 +50,38 @@ export function EmailTrackingCard() {
 
   const handleSync = async () => {
     setStatus('syncing')
+    setSyncCount(0)
+    setErrorMessage("")
     try {
       const res = await fetch('/api/jobs/sync', { method: 'POST' })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Server crashed or returned invalid response" }))
+        throw new Error(errorData.error || `Server responded with ${res.status}`)
+      }
+      
       const data = await res.json()
       if (data.success) {
         setSyncCount(data.count)
         setStatus('synced')
-        // Refresh the page to show new jobs after a short delay
-        setTimeout(() => window.location.reload(), 2000)
+        
+        // Refresh the dashboard data immediately if new jobs found
+        if (data.count > 0 && onRefresh) {
+          onRefresh()
+        }
+        
+        // Return to connected state after a short delay
+        setTimeout(() => setStatus('connected'), 3000)
       } else {
-        setStatus('connected')
+        console.error("Sync error:", data.error)
+        setErrorMessage(data.error || "Unknown synchronization error")
+        setStatus('error')
+        setTimeout(() => setStatus('connected'), 5000)
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Sync failed", e)
-      setStatus('connected')
+      setErrorMessage(e.message || "Failed to reach the server. Please check your connection.")
+      setStatus('error')
+      setTimeout(() => setStatus('connected'), 5000)
     }
   }
 
@@ -133,12 +156,15 @@ export function EmailTrackingCard() {
                 <h3 className="text-xl font-bold text-ink mb-2">
                   {status === 'connected' ? 'Email Tracking Active' : 
                    status === 'syncing' ? 'Syncing Inbox...' : 
-                   `Found ${syncCount} New Applications!`}
+                   status === 'error' ? 'Synchronization Failed' :
+                   syncCount > 0 ? `Found ${syncCount} New Applications!` : "Inbox is Up to Date!"}
                 </h3>
                 <p className="text-body max-w-md mb-6">
                   {status === 'connected' ? "We're ready to scan your inbox for job updates." : 
                    status === 'syncing' ? "This may take a few seconds while we parse your emails." :
-                   "Your dashboard is being updated with the latest entries."}
+                   status === 'error' ? errorMessage :
+                   syncCount > 0 ? "Your dashboard is being updated with the latest entries." :
+                   "We couldn't find any new job-related emails since the last sync."}
                 </p>
                 
                 {status === 'connected' && (

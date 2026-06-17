@@ -56,6 +56,13 @@ export async function getJobsAction() {
     where: {
       userId: session.user.id,
     },
+    include: {
+      interactions: {
+        orderBy: {
+          date: "desc",
+        },
+      },
+    },
     orderBy: {
       appliedDate: "desc",
     },
@@ -76,6 +83,12 @@ export async function getJobsAction() {
     contactEmail: job.contactEmail,
     processedMessageIds: job.processedMessageIds,
     threadId: job.threadId,
+    interactions: job.interactions.map(i => ({
+      id: i.id,
+      messageId: i.messageId,
+      subject: i.subject,
+      date: i.date.toISOString(),
+    })),
   })) as Job[]
 }
 

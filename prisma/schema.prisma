@@ -20,6 +20,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   jobs          Job[]
+  processedEmails ProcessedEmail[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -43,6 +44,8 @@ model Job {
   contactEmail       String?  @map("contact_email")
   processedMessageIds String[] @default([]) @map("processed_message_ids")
   threadId           String?  @map("thread_id")
+  
+  interactions       EmailInteraction[]
 
   userId      String   @map("user_id")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -51,6 +54,20 @@ model Job {
   updatedAt   DateTime @updatedAt
 
   @@map("jobs")
+}
+
+model EmailInteraction {
+  id        String   @id @default(cuid())
+  messageId String   @map("message_id")
+  subject   String
+  date      DateTime
+  
+  jobId     String   @map("job_id")
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("email_interactions")
 }
 
 model Account {
@@ -90,4 +107,15 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model ProcessedEmail {
+  id        String   @id @default(cuid())
+  messageId String   @map("message_id")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, messageId])
+  @@map("processed_emails")
 }

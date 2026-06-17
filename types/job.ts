@@ -6,6 +6,13 @@ export type Socials = {
 
 export type JobStatus = "applied" | "ongoing" | "ghosted" | "rejected";
 
+export type EmailInteraction = {
+  id: string;
+  messageId: string;
+  subject: string;
+  date: string;
+};
+
 export type Job = {
   id: string;
   company: string;
@@ -21,4 +28,5 @@ export type Job = {
   contactEmail?: string | null;
   processedMessageIds: string[];
   threadId?: string | null;
+  interactions?: EmailInteraction[];
 };
