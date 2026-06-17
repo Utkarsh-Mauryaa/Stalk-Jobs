@@ -43,13 +43,71 @@ function getMessageBody(payload: any): string {
   return "";
 }
 
-export async function syncGmailJobs(userId: string) {
+/**
+ * Refreshes an expired Google access token
+ */
+async function getValidAccessToken(userId: string) {
   const account = await db.account.findFirst({
     where: { userId, provider: "google" },
   });
 
-  if (!account?.access_token) {
-    throw new Error("No Google account connected");
+  if (!account?.refresh_token) {
+    return account?.access_token || null;
+  }
+
+  // Check if token is expired (with a 1-minute buffer)
+  const isExpired = account.expires_at 
+    ? (account.expires_at * 1000) < (Date.now() + 60000)
+    : false;
+
+  if (!isExpired) {
+    return account.access_token;
+  }
+
+  console.log("Sync: Access token expired, attempting refresh...");
+
+  try {
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: process.env.AUTH_GOOGLE_ID!,
+        client_secret: process.env.AUTH_GOOGLE_SECRET!,
+        grant_type: "refresh_token",
+        refresh_token: account.refresh_token,
+      }),
+    });
+
+    const tokens = await response.json();
+
+    if (!response.ok) {
+      console.error("Sync: Failed to refresh token", tokens);
+      return account.access_token; // Return old token as last resort
+    }
+
+    // Update the database with new tokens
+    await db.account.update({
+      where: { id: account.id },
+      data: {
+        access_token: tokens.access_token,
+        expires_at: Math.floor(Date.now() / 1000 + tokens.expires_in),
+        refresh_token: tokens.refresh_token ?? account.refresh_token,
+      },
+    });
+
+    console.log("Sync: Token refreshed successfully");
+    return tokens.access_token;
+  } catch (error) {
+    console.error("Sync: Error refreshing token:", error);
+    return account.access_token;
+  }
+}
+
+export async function syncGmailJobs(userId: string) {
+  const access_token = await getValidAccessToken(userId);
+
+  if (!access_token) {
+    throw new Error("No Google account connected or tokens expired");
   }
 
   // 1. Fetch all processed message IDs for this user to avoid double processing
@@ -57,58 +115,62 @@ export async function syncGmailJobs(userId: string) {
     where: { userId },
     select: { processedMessageIds: true }
   });
-  
-  let previouslyProcessed: { messageId: string }[] = [];
-  if (db.processedEmail) {
-    previouslyProcessed = await db.processedEmail.findMany({
-      where: { userId },
-      select: { messageId: true }
-    });
-  } else {
-    console.warn("Sync: db.processedEmail is undefined. Please ensure 'npx prisma generate' has been run.");
-  }
 
-  const allProcessedIds = new Set([
-    ...userJobs.flatMap(j => j.processedMessageIds),
-    ...previouslyProcessed.map(p => p.messageId)
-  ]);
+const previouslyProcessed = db.processedEmail ? await db.processedEmail.findMany({
+  where: { userId },
+  select: { messageId: true }
+}) : [];
 
-  // 2. Search for job-related emails
-  const query = "subject:(application OR interview OR recruiter OR hired OR position OR role OR job) -{newsletter unsubscribe digest \"job alert\" \"daily update\"}";
-  const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=100`;
+const ignoredThreads = db.ignoredThread ? await db.ignoredThread.findMany({
+  where: { userId },
+  select: { threadId: true }
+}) : [];
 
-  const searchResponse = await fetch(searchUrl, {
-    headers: { Authorization: `Bearer ${account.access_token}` },
-  });
+const allProcessedIds = new Set([
+  ...userJobs.flatMap(j => j.processedMessageIds),
+  ...previouslyProcessed.map(p => p.messageId)
+]);
 
-  if (!searchResponse.ok) {
-    throw new Error("Failed to search Gmail messages");
-  }
+const allIgnoredThreadIds = new Set(ignoredThreads.map(t => t.threadId));
 
-  const searchData = await searchResponse.json();
-  const messages: GmailMessage[] = searchData.messages || [];
-  
-  const newMessages = messages.filter(m => !allProcessedIds.has(m.id));
-  console.log(`Sync: Found ${messages.length} matching, ${newMessages.length} are new`);
+// 2. Search for job-related emails
+// We exclude common marketing/newsletter terms AND rejection terms that might re-trigger deleted jobs
+const query = "subject:(application OR interview OR recruiter OR hired OR position OR role OR job) -{newsletter unsubscribe digest \"job alert\" \"daily update\" \"unfortunately\" \"not moving forward\" \"rejected\" \"not selected\"}";
+const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=100`;
+const searchResponse = await fetch(searchUrl, {
+  headers: { Authorization: `Bearer ${access_token}` },
+});
 
-  // We process the NEWEST messages first as per user request ("next latest")
-  const messagesToProcess = newMessages.slice(0, 10);
-  
-  console.log(`Sync: Processing ${messagesToProcess.length} messages...`);
+if (!searchResponse.ok) {
+  const errorBody = await searchResponse.text();
+  console.error("Gmail Search Error Body:", errorBody);
+  throw new Error("Failed to search Gmail messages");
+}
 
-  const results = await Promise.all(
-    messagesToProcess.map(async (msg, index) => {
-      try {
-        // Add a tiny stagger to avoid all hitting AI at the exact same millisecond
-        await new Promise(r => setTimeout(r, index * 100));
+const searchData = await searchResponse.json();
+const messages: GmailMessage[] = searchData.messages || [];
 
-        const detailUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`;
-        const detailResponse = await fetch(detailUrl, {
-          headers: { Authorization: `Bearer ${account.access_token}` },
-        });
+// Filter messages that are already processed OR belong to an ignored thread
+const newMessages = messages.filter(m => !allProcessedIds.has(m.id) && !allIgnoredThreadIds.has(m.threadId));
+console.log(`Sync: Found ${messages.length} matching, ${newMessages.length} are new/not ignored`);
 
-        if (!detailResponse.ok) return null;
+// We process the NEWEST messages first as per user request ("next latest")
+const messagesToProcess = newMessages.slice(0, 10);
 
+console.log(`Sync: Processing ${messagesToProcess.length} messages...`);
+
+const results = await Promise.all(
+  messagesToProcess.map(async (msg, index) => {
+    try {
+      // Add a tiny stagger to avoid all hitting AI at the exact same millisecond
+      await new Promise(r => setTimeout(r, index * 100));
+
+      const detailUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`;
+      const detailResponse = await fetch(detailUrl, {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+
+      if (!detailResponse.ok) return null;
         const fullMsg = await detailResponse.json();
         
         // Mark as processed immediately so we don't try again if it's not a job

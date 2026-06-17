@@ -131,9 +131,48 @@ export async function deleteJobAction(id: string) {
     throw new Error("Unauthorized")
   }
 
+  // 1. Fetch the job to get its processedMessageIds and threadId
+  const job = await db.job.findUnique({
+    where: { id, userId: session.user.id },
+    select: { id: true, processedMessageIds: true, threadId: true }
+  })
+
+  if (!job) {
+    console.warn(`Delete: Job ${id} not found or already deleted.`);
+    return;
+  }
+
+  // 2. Mark the thread as ignored so no other messages in this conversation re-trigger a sync
+  if (job.threadId && db.ignoredThread) {
+    await db.ignoredThread.upsert({
+      where: { userId_threadId: { userId: session.user.id!, threadId: job.threadId } },
+      update: {},
+      create: { userId: session.user.id!, threadId: job.threadId }
+    })
+  }
+
+  if (job.processedMessageIds.length > 0 && db.processedEmail) {
+    const userId = session.user.id!
+    // 2. Move these IDs to the ProcessedEmail table so they aren't re-synced
+    // Using Promise.all with upsert for maximum compatibility across different DB adapters
+    await Promise.all(
+      job.processedMessageIds.map(messageId => 
+        db.processedEmail.upsert({
+          where: { userId_messageId: { userId, messageId } },
+          update: {},
+          create: { userId, messageId }
+        })
+      )
+    )
+  }
+ else if (job.processedMessageIds.length > 0) {
+    console.warn("Delete: db.processedEmail is undefined. Skipping message ID tracking.");
+  }
+
+  // 3. Delete the job
   await db.job.delete({
     where: {
-      id,
+      id: job.id,
       userId: session.user.id,
     },
   })
