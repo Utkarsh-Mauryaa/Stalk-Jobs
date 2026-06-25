@@ -193,22 +193,22 @@ const newMessages = messages.filter(m => !allProcessedIds.has(m.id) && !allIgnor
 console.log(`Sync: Found ${messages.length} matching, ${newMessages.length} are new/not ignored`);
 
 // We process the NEWEST messages first as per user request ("next latest")
-const messagesToProcess = newMessages.slice(0, 10);
+const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processing ${messagesToProcess.length} messages...`);
 
-console.log(`Sync: Processing ${messagesToProcess.length} messages...`);
+  const results: ParsedJob[] = [];
 
-const results = await Promise.all(
-  messagesToProcess.map(async (msg, index) => {
+  for (let i = 0; i < messagesToProcess.length; i++) {
+    const msg = messagesToProcess[i];
     try {
       // Add a tiny stagger to avoid all hitting AI at the exact same millisecond
-      await new Promise(r => setTimeout(r, index * 100));
+      await new Promise(r => setTimeout(r, 100));
 
       const detailUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`;
       const detailResponse = await fetch(detailUrl, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
 
-      if (!detailResponse.ok) return null;
+      if (!detailResponse.ok) continue;
       const fullMsg = await detailResponse.json();
 
       const headers: GmailHeader[] = fullMsg.payload.headers;
@@ -221,7 +221,7 @@ const results = await Promise.all(
       const parsed = await parseJobEmail(subject, rawBody, from, date);
       
       if (!parsed) {
-        // Classified as not a job application, mark as processed and return null
+        // Classified as not a job application, mark as processed and continue
         if (db.processedEmail) {
           await db.processedEmail.upsert({
             where: { userId_messageId: { userId, messageId: msg.id } },
@@ -229,18 +229,31 @@ const results = await Promise.all(
             create: { userId, messageId: msg.id }
           });
         }
-        return null;
+        continue;
       }
 
       console.log(`Sync: Found job - ${parsed.role} at ${parsed.company}`);
       
-      const existing = await db.job.findFirst({
-        where: {
-          userId,
-          company: { equals: parsed.company, mode: 'insensitive' },
-          role: { equals: parsed.role, mode: 'insensitive' }
-        }
-      });
+      // Look up existing job. Try to match by threadId first, then by company & role
+      let existing = null;
+      if (fullMsg.threadId) {
+        existing = await db.job.findFirst({
+          where: {
+            userId,
+            threadId: fullMsg.threadId
+          }
+        });
+      }
+      
+      if (!existing) {
+        existing = await db.job.findFirst({
+          where: {
+            userId,
+            company: { equals: parsed.company, mode: 'insensitive' },
+            role: { equals: parsed.role, mode: 'insensitive' }
+          }
+        });
+      }
 
       if (existing) {
         const shouldUpdateStatus = 
@@ -275,7 +288,7 @@ const results = await Promise.all(
           });
         }
 
-        return { ...parsed, company: existing.company, role: existing.role };
+        results.push({ ...parsed, company: existing.company, role: existing.role });
       } else {
         if (parsed.status === "rejected") {
           console.log(`Sync: Skipping creation of new untracked rejected job for ${parsed.company}`);
@@ -287,7 +300,7 @@ const results = await Promise.all(
               create: { userId, messageId: msg.id }
             });
           }
-          return null;
+          continue;
         }
 
         await db.job.create({
@@ -323,14 +336,12 @@ const results = await Promise.all(
           });
         }
 
-        return parsed;
+        results.push(parsed);
       }
     } catch (err) {
       console.error(`Sync: Error processing ${msg.id}:`, err);
-      return null;
     }
-  })
-  );
+  }
 
-  return results.filter((j): j is ParsedJob => j !== null);
+  return results;
 }
