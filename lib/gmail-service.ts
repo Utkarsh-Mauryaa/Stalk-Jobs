@@ -173,11 +173,11 @@ const allIgnoredThreadIds = new Set(ignoredThreads.map(t => t.threadId));
 
   // 2. Search for job-related emails
   // We exclude common marketing/newsletter terms, but we keep rejection terms so we can auto-update statuses
-  const query = "subject:(application OR interview OR recruiter OR hired OR position OR role OR job) -{newsletter unsubscribe digest \"job alert\" \"daily update\"}";
+  const query = "subject:(application OR interview OR recruiter OR hired OR position OR role OR job OR applied OR apply) -{newsletter unsubscribe digest \"job alert\" \"daily update\"}";
   const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=100`;
-const searchResponse = await fetch(searchUrl, {
-  headers: { Authorization: `Bearer ${access_token}` },
-});
+  const searchResponse = await fetch(searchUrl, {
+    headers: { Authorization: `Bearer ${access_token}` },
+  });
 
 if (!searchResponse.ok) {
   const errorBody = await searchResponse.text();
@@ -209,9 +209,64 @@ const results = await Promise.all(
       });
 
       if (!detailResponse.ok) return null;
-        const fullMsg = await detailResponse.json();
-        
-        // Mark as processed immediately so we don't try again if it's not a job
+      const fullMsg = await detailResponse.json();
+
+      const headers: GmailHeader[] = fullMsg.payload.headers;
+      const subject = headers.find((h) => h.name === "Subject")?.value || "";
+      const from = headers.find((h) => h.name === "From")?.value || "";
+      const date = new Date(parseInt(fullMsg.internalDate));
+      
+      const rawBody = getMessageBody(fullMsg.payload);
+
+      const parsed = await parseJobEmail(subject, rawBody, from, date);
+      
+      if (!parsed) {
+        // Classified as not a job application, mark as processed and return null
+        if (db.processedEmail) {
+          await db.processedEmail.upsert({
+            where: { userId_messageId: { userId, messageId: msg.id } },
+            update: {},
+            create: { userId, messageId: msg.id }
+          });
+        }
+        return null;
+      }
+
+      console.log(`Sync: Found job - ${parsed.role} at ${parsed.company}`);
+      
+      const existing = await db.job.findFirst({
+        where: {
+          userId,
+          company: { equals: parsed.company, mode: 'insensitive' },
+          role: { equals: parsed.role, mode: 'insensitive' }
+        }
+      });
+
+      if (existing) {
+        const shouldUpdateStatus = 
+          (existing.status === "applied" && (parsed.status === "ongoing" || parsed.status === "rejected")) ||
+          (existing.status === "ongoing" && parsed.status === "rejected");
+
+        await db.job.update({
+          where: { id: existing.id },
+          data: { 
+            status: shouldUpdateStatus ? parsed.status : existing.status,
+            interactionCount: { increment: 1 },
+            lastInteractionAt: date,
+            processedMessageIds: { push: msg.id },
+            contactEmail: parsed.contactEmail || existing.contactEmail,
+            threadId: fullMsg.threadId || existing.threadId,
+            interactions: {
+              create: {
+                messageId: msg.id,
+                subject: subject,
+                date: date,
+              }
+            }
+          }
+        });
+
+        // Mark as processed in DB since operations completed successfully
         if (db.processedEmail) {
           await db.processedEmail.upsert({
             where: { userId_messageId: { userId, messageId: msg.id } },
@@ -220,86 +275,61 @@ const results = await Promise.all(
           });
         }
 
-        const headers: GmailHeader[] = fullMsg.payload.headers;
-        const subject = headers.find((h) => h.name === "Subject")?.value || "";
-        const from = headers.find((h) => h.name === "From")?.value || "";
-        const date = new Date(parseInt(fullMsg.internalDate));
-        
-        const rawBody = getMessageBody(fullMsg.payload);
+        return { ...parsed, company: existing.company, role: existing.role };
+      } else {
+        if (parsed.status === "rejected") {
+          console.log(`Sync: Skipping creation of new untracked rejected job for ${parsed.company}`);
+          // Mark as processed so we don't scan it again
+          if (db.processedEmail) {
+            await db.processedEmail.upsert({
+              where: { userId_messageId: { userId, messageId: msg.id } },
+              update: {},
+              create: { userId, messageId: msg.id }
+            });
+          }
+          return null;
+        }
 
-        const parsed = await parseJobEmail(subject, rawBody, from, date);
-        if (!parsed) return null;
-
-        console.log(`Sync: Found job - ${parsed.role} at ${parsed.company}`);
-        
-        const existing = await db.job.findFirst({
-          where: {
+        await db.job.create({
+          data: { 
+            company: parsed.company,
+            role: parsed.role,
+            platform: parsed.platform,
+            status: parsed.status,
+            appliedDate: parsed.appliedDate,
+            notes: parsed.notes,
+            contactEmail: parsed.contactEmail,
             userId,
-            company: { equals: parsed.company, mode: 'insensitive' },
-            role: { equals: parsed.role, mode: 'insensitive' }
+            processedMessageIds: [msg.id],
+            interactionCount: 1,
+            lastInteractionAt: date,
+            threadId: fullMsg.threadId,
+            interactions: {
+              create: {
+                messageId: msg.id,
+                subject: subject,
+                date: date,
+              }
+            }
           }
         });
 
-        if (existing) {
-          const shouldUpdateStatus = 
-            (existing.status === "applied" && (parsed.status === "ongoing" || parsed.status === "rejected")) ||
-            (existing.status === "ongoing" && parsed.status === "rejected");
-
-          await db.job.update({
-            where: { id: existing.id },
-            data: { 
-              status: shouldUpdateStatus ? parsed.status : existing.status,
-              interactionCount: { increment: 1 },
-              lastInteractionAt: date,
-              processedMessageIds: { push: msg.id },
-              contactEmail: parsed.contactEmail || existing.contactEmail,
-              threadId: fullMsg.threadId || existing.threadId,
-              interactions: {
-                create: {
-                  messageId: msg.id,
-                  subject: subject,
-                  date: date,
-                }
-              }
-            }
+        // Mark as processed in DB since operations completed successfully
+        if (db.processedEmail) {
+          await db.processedEmail.upsert({
+            where: { userId_messageId: { userId, messageId: msg.id } },
+            update: {},
+            create: { userId, messageId: msg.id }
           });
-          return { ...parsed, company: existing.company, role: existing.role };
-        } else {
-          if (parsed.status === "rejected") {
-            console.log(`Sync: Skipping creation of new untracked rejected job for ${parsed.company}`);
-            return null;
-          }
-
-          await db.job.create({
-            data: { 
-              company: parsed.company,
-              role: parsed.role,
-              platform: parsed.platform,
-              status: parsed.status,
-              appliedDate: parsed.appliedDate,
-              notes: parsed.notes,
-              contactEmail: parsed.contactEmail,
-              userId,
-              processedMessageIds: [msg.id],
-              interactionCount: 1,
-              lastInteractionAt: date,
-              threadId: fullMsg.threadId,
-              interactions: {
-                create: {
-                  messageId: msg.id,
-                  subject: subject,
-                  date: date,
-                }
-              }
-            }
-          });
-          return parsed;
         }
-      } catch (err) {
-        console.error(`Sync: Error processing ${msg.id}:`, err);
-        return null;
+
+        return parsed;
       }
-    })
+    } catch (err) {
+      console.error(`Sync: Error processing ${msg.id}:`, err);
+      return null;
+    }
+  })
   );
 
   return results.filter((j): j is ParsedJob => j !== null);

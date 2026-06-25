@@ -1,17 +1,35 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.MINIMAX_API_KEY,
-  baseURL: 'https://integrate.api.nvidia.com/v1',
-});
-
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(isGemini: boolean) {
+  if (openaiClient) return openaiClient;
+
+  const apiKey = isGemini ? process.env.GEMINI_API_KEY : process.env.MINIMAX_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("AI API Key is missing in environment variables");
+  }
+
+  openaiClient = new OpenAI({
+    apiKey,
+    baseURL: isGemini 
+      ? 'https://generativelanguage.googleapis.com/v1beta/openai/' 
+      : 'https://integrate.api.nvidia.com/v1',
+    timeout: 20000, // 20-second timeout to prevent infinite hang
+  });
+
+  return openaiClient;
+}
+
 export async function parseJobWithAI(emailSubject: string, emailBody: string, sender: string, retryCount = 0): Promise<any> {
-  const apiKey = process.env.MINIMAX_API_KEY;
+  const isGemini = !!process.env.GEMINI_API_KEY;
+  const apiKey = isGemini ? process.env.GEMINI_API_KEY : process.env.MINIMAX_API_KEY;
   
   if (!apiKey) {
-    console.error("MINIMAX_API_KEY is missing in environment variables");
+    console.error("AI API Key is missing in environment variables");
     return null;
   }
 
@@ -72,14 +90,18 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
   `;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "minimaxai/minimax-m2.7",
+    const client = getOpenAIClient(isGemini);
+    const AI_MODEL = isGemini ? "gemini-2.5-flash" : "meta/llama-3.3-70b-instruct";
+
+    const completion = await client.chat.completions.create({
+      model: AI_MODEL,
       messages: [
         { role: "system", content: "You are a professional assistant that extracts job application data into JSON format. You MUST return valid JSON." },
         { role: "user", content: prompt }
       ],
       temperature: 0.1, // Lower temperature for more consistent/faster JSON
       max_tokens: 2048,
+      ...(isGemini ? { response_format: { type: "json_object" } } : {}),
     });
 
     const message = completion.choices[0]?.message;
@@ -126,7 +148,8 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
       return parseJobWithAI(emailSubject, emailBody, sender, retryCount + 1);
     }
 
-    console.error("Minimax Parsing Error:", error.message || error);
-    return null;
+    console.error("AI Parsing Error:", error.message || error);
+    throw error; // Rethrow so the caller knows it failed and doesn't mark the email as processed
   }
 }
+
