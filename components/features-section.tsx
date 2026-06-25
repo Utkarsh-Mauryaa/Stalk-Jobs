@@ -16,7 +16,7 @@ const container = {
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-32 bg-canvas relative overflow-hidden">
+    <section id="features" className="py-16 sm:py-24 lg:py-32 bg-canvas relative overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.01)_1px,transparent_1px)] bg-[length:32px_32px] pointer-events-none" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
         <motion.div 

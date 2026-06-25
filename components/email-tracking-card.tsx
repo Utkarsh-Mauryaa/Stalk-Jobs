@@ -92,7 +92,7 @@ export function EmailTrackingCard({ onRefresh }: EmailTrackingCardProps) {
       className="mt-12 overflow-hidden rounded-2xl border border-hairline bg-canvas shadow-sm"
     >
       <div className="flex flex-col md:flex-row">
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-6 sm:p-8">
           <AnimatePresence mode="wait">
             {status === 'idle' || status === 'loading' ? (
               <motion.div
@@ -185,7 +185,7 @@ export function EmailTrackingCard({ onRefresh }: EmailTrackingCardProps) {
           </AnimatePresence>
         </div>
 
-        <div className="w-full md:w-72 bg-canvas-soft border-t md:border-t-0 md:border-l border-hairline p-8 flex flex-col justify-center">
+        <div className="w-full md:w-72 bg-canvas-soft border-t md:border-t-0 md:border-l border-hairline p-6 sm:p-8 flex flex-col justify-center">
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-mute">Supported Platforms</h4>
             <div className="grid grid-cols-2 gap-3">

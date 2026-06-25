@@ -15,7 +15,7 @@ const container = {
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-24 bg-canvas-soft border-y border-hairline">
+    <section id="how-it-works" className="py-16 sm:py-24 bg-canvas-soft border-y border-hairline">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}

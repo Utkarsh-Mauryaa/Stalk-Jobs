@@ -20,13 +20,13 @@ export function FeatureCard({ icon, title, description, badge }: FeatureCardProp
     <motion.div 
       variants={item}
       whileHover={{ y: -8 }}
-      className="p-10 rounded-[2rem] border border-hairline bg-canvas shadow-level-2 hover:shadow-level-4 transition-all duration-300 relative group"
+      className="p-6 sm:p-10 rounded-2xl sm:rounded-[2rem] border border-hairline bg-canvas shadow-level-2 hover:shadow-level-4 transition-all duration-300 relative group"
     >
       <div className="h-14 w-14 rounded-2xl bg-canvas flex items-center justify-center border border-hairline mb-8 shadow-sm group-hover:scale-110 transition-transform duration-300">
         {icon}
       </div>
       {badge && (
-        <span className="absolute top-10 right-10 text-[10px] font-mono uppercase tracking-widest text-mute bg-canvas-soft px-2 py-0.5 rounded border border-hairline">
+        <span className="absolute top-6 right-6 sm:top-10 sm:right-10 text-[10px] font-mono uppercase tracking-widest text-mute bg-canvas-soft px-2 py-0.5 rounded border border-hairline">
           {badge}
         </span>
       )}

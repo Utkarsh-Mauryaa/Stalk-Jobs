@@ -100,7 +100,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4 p-6 pt-0">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <label htmlFor="company" className="text-sm font-medium text-ink">Company</label>
               <input
@@ -159,7 +159,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <label htmlFor="status" className="text-sm font-medium text-ink">Status</label>
               <select

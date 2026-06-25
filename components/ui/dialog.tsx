@@ -38,7 +38,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative w-full max-w-lg overflow-hidden rounded-xl border border-hairline bg-canvas shadow-level-5 focus:outline-none"
+            className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-hairline bg-canvas shadow-level-5 focus:outline-none"
           >
             {children}
             <button

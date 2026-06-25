@@ -32,7 +32,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="max-w-4xl text-5xl font-bold tracking-tight text-ink sm:text-7xl mb-8"
+            className="max-w-4xl text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-ink mb-8"
           >
             Stalk your dream job.<br />
             <span className="text-mute">Zero manual effort.</span>
@@ -41,7 +41,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="max-w-2xl text-lg text-body mb-10"
+            className="max-w-2xl text-base sm:text-lg text-body mb-10"
           >
             The first job application tracker that lives in your inbox. 
             Auto-detect applications, rejections, and interviews without lifting a finger.

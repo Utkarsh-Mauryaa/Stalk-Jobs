@@ -65,7 +65,7 @@ export function StatCard({ label, value, variant = "default" }: StatCardProps) {
         </div>
         <div className="flex items-center gap-1.5 bg-canvas-soft px-2 py-1 rounded-full border border-hairline transition-colors">
           <div className={`h-2 w-2 rounded-full ${style.indicator}`} />
-          <span className="text-[10px] font-mono text-body font-medium uppercase">{variant}</span>
+          <span className="text-[10px] font-mono text-body font-medium uppercase hidden sm:inline">{variant}</span>
         </div>
       </div>
     </motion.div>
