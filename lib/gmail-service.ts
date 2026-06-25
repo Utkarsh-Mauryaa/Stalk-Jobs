@@ -245,6 +245,13 @@ const results = await Promise.all(
             (existing.status === "applied" && (parsed.status === "ongoing" || parsed.status === "rejected")) ||
             (existing.status === "ongoing" && parsed.status === "rejected");
 
+          const existingSocials = (existing.socials as any) || {};
+          const newSocials = {
+            linkedin: parsed.socials?.linkedin || existingSocials.linkedin || "",
+            email: parsed.socials?.email || existingSocials.email || "",
+            x: existingSocials.x || ""
+          };
+
           await db.job.update({
             where: { id: existing.id },
             data: { 
@@ -254,6 +261,7 @@ const results = await Promise.all(
               processedMessageIds: { push: msg.id },
               contactEmail: parsed.contactEmail || existing.contactEmail,
               threadId: fullMsg.threadId || existing.threadId,
+              socials: newSocials,
               interactions: {
                 create: {
                   messageId: msg.id,
@@ -263,12 +271,18 @@ const results = await Promise.all(
               }
             }
           });
-          return { ...parsed, company: existing.company, role: existing.role };
+          return { ...parsed, company: existing.company, role: existing.role, socials: newSocials };
         } else {
           if (parsed.status === "rejected") {
             console.log(`Sync: Skipping creation of new untracked rejected job for ${parsed.company}`);
             return null;
           }
+
+          const defaultSocials = parsed.socials || {
+            linkedin: "",
+            email: parsed.contactEmail || "",
+            x: ""
+          };
 
           await db.job.create({
             data: { 
@@ -279,6 +293,7 @@ const results = await Promise.all(
               appliedDate: parsed.appliedDate,
               notes: parsed.notes,
               contactEmail: parsed.contactEmail,
+              socials: defaultSocials,
               userId,
               processedMessageIds: [msg.id],
               interactionCount: 1,

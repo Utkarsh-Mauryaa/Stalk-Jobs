@@ -2,9 +2,9 @@ import { useState, useMemo, useEffect } from "react"
 import { Job, JobStatus, Socials } from "@/types/job"
 import { getJobsAction, addJobAction, updateJobAction, deleteJobAction } from "@/lib/actions/job-actions"
 
-// Use the session date: June 13, 2026 (Today)
-export const TODAY_STR = "2026-06-13"
-export const TODAY = new Date(TODAY_STR + "T00:00:00") // Force UTC or local consistently
+// Use the current local date dynamically
+export const TODAY_STR = new Date().toISOString().split("T")[0]
+export const TODAY = new Date()
 
 export function useJobs() {
   const [jobs, setJobs] = useState<Job[]>([])

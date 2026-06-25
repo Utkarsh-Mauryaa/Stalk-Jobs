@@ -30,7 +30,8 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
       "status": "applied" | "ongoing" | "rejected", 
       "platform": string,
       "appliedDate": string, (in YYYY-MM-DD format)
-      "contactEmail": string | null
+      "contactEmail": string | null,
+      "linkedinUrl": string | null
     }
 
     IMPORTANT RULES:
@@ -64,7 +65,10 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
        - "applied": Use for confirmation that an application was submitted or received.
        - "ongoing": Use for interview invites, scheduling, or follow-ups during the hiring process.
        - "rejected": Use for clear rejection notices.
-    8. Return ONLY the JSON object. Do not include any explanations, reasoning, or markdown formatting blocks (like \`\`\`json).
+    8. Rules for 'linkedinUrl':
+       - Extract the LinkedIn URL of the recruiter, hiring manager, or sender from the email body (especially sign-off/signature blocks) if present.
+       - If no LinkedIn URL is found, return null.
+    9. Return ONLY the JSON object. Do not include any explanations, reasoning, or markdown formatting blocks (like \`\`\`json).
   `;
 
   try {

@@ -52,6 +52,42 @@ export async function getJobsAction() {
     return []
   }
 
+  // Auto-ghost stale active applications in the database
+  try {
+    const now = new Date()
+    const activeJobs = await db.job.findMany({
+      where: {
+        userId: session.user.id,
+        status: { in: ["applied", "ongoing"] },
+      },
+    })
+
+    const staleJobIds: string[] = []
+    for (const job of activeJobs) {
+      const appliedDate = new Date(job.appliedDate)
+      const diffTime = now.getTime() - appliedDate.getTime()
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+      const threshold = Math.max(7, job.autoGhostDays)
+
+      if (diffDays > threshold) {
+        staleJobIds.push(job.id)
+      }
+    }
+
+    if (staleJobIds.length > 0) {
+      await db.job.updateMany({
+        where: {
+          id: { in: staleJobIds },
+        },
+        data: {
+          status: "ghosted",
+        },
+      })
+    }
+  } catch (error) {
+    console.error("Failed to auto-ghost active jobs in getJobsAction:", error)
+  }
+
   const jobs = await db.job.findMany({
     where: {
       userId: session.user.id,
