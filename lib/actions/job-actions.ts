@@ -324,10 +324,23 @@ export async function updateJobAction(id: string, data: Partial<Job>) {
     }
   }
 
-  const job = await db.job.update({
+  // 1. Verify ownership first
+  const existingJob = await db.job.findFirst({
     where: {
       id,
       userId: session.user.id,
+    },
+    select: { id: true }
+  })
+
+  if (!existingJob) {
+    throw new Error("Job not found or unauthorized")
+  }
+
+  // 2. Perform the update using unique index (id)
+  const job = await db.job.update({
+    where: {
+      id,
     },
     data: {
       company: data.company,
@@ -361,7 +374,7 @@ export async function deleteJobAction(id: string) {
   }
 
   // 1. Fetch the job to get its processedMessageIds, threadId, and status
-  const job = await db.job.findUnique({
+  const job = await db.job.findFirst({
     where: { id, userId: session.user.id },
     select: { id: true, processedMessageIds: true, threadId: true, status: true }
   })
@@ -424,7 +437,6 @@ export async function deleteJobAction(id: string) {
   await db.job.delete({
     where: {
       id: job.id,
-      userId: session.user.id,
     },
   })
 
