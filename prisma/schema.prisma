@@ -37,7 +37,6 @@ model Job {
   status      String   @default("applied")
   appliedDate DateTime @default(now())
   notes       String?  @db.Text
-  socials     Json?
   autoGhostDays Int    @default(14) @map("auto_ghost_days")
   
   interactionCount   Int      @default(1) @map("interaction_count")

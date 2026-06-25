@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog"
-import { Job, JobStatus, Socials } from "@/types/job"
+import { Job, JobStatus } from "@/types/job"
 
 export type JobFormData = {
   company: string;
@@ -17,7 +17,6 @@ export type JobFormData = {
   platform: string;
   status: JobStatus;
   appliedDate: string;
-  socials: Socials;
   notes: string;
   autoGhostDays: number;
 };
@@ -44,7 +43,6 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
     platform: "LinkedIn",
     status: "applied",
     appliedDate: today,
-    socials: { linkedin: "", email: "", x: "" },
     notes: "",
     autoGhostDays: 14
   })
@@ -62,11 +60,6 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
           platform: initialJob.platform,
           status: initialJob.status,
           appliedDate: initialJob.appliedDate,
-          socials: { 
-            linkedin: initialJob.socials?.linkedin || "", 
-            email: initialJob.socials?.email || "", 
-            x: initialJob.socials?.x || "" 
-          },
           notes: initialJob.notes || "",
           autoGhostDays: initialJob.autoGhostDays
         })
@@ -79,7 +72,6 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
           platform: "LinkedIn",
           status: "applied",
           appliedDate: today,
-          socials: { linkedin: "", email: "", x: "" },
           notes: "",
           autoGhostDays: 14
         })
@@ -221,29 +213,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
               placeholder="Add important points..."
             />
           </div>
-          <div className="grid gap-2 pt-2 border-t border-hairline">
-            <p className="text-xs font-mono uppercase text-mute">Socials (Optional)</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
-              <input
-                placeholder="LinkedIn URL"
-                value={job.socials?.linkedin || ""}
-                onChange={(e) => setJob({ ...job, socials: { ...job.socials, linkedin: e.target.value } })}
-                className="h-9 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ink/20"
-              />
-              <input
-                placeholder="Recruiter Email"
-                value={job.socials?.email || ""}
-                onChange={(e) => setJob({ ...job, socials: { ...job.socials, email: e.target.value } })}
-                className="h-9 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ink/20"
-              />
-              <input
-                placeholder="X (Twitter) URL"
-                value={job.socials?.x || ""}
-                onChange={(e) => setJob({ ...job, socials: { ...job.socials, x: e.target.value } })}
-                className="h-9 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ink/20 sm:col-span-2"
-              />
-            </div>
-          </div>
+
         </div>
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>

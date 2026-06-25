@@ -8,11 +8,6 @@ export interface ParsedJob {
   appliedDate: Date;
   notes?: string;
   contactEmail?: string | null;
-  socials?: {
-    linkedin?: string;
-    email?: string;
-    x?: string;
-  };
 }
 
 /**
@@ -63,11 +58,6 @@ export async function parseJobEmail(subject: string, body: string, sender: strin
     status: finalStatus,
     appliedDate: isValidDate ? extractedDate : (fallbackDate || new Date()), 
     notes: `Automatically parsed via StalkJobs AI`,
-    contactEmail: aiResult.contactEmail,
-    socials: {
-      linkedin: aiResult.linkedinUrl || "",
-      email: aiResult.contactEmail || "",
-      x: ""
-    }
+    contactEmail: aiResult.contactEmail
   };
 }

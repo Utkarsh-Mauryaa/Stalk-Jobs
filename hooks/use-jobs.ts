@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react"
-import { Job, JobStatus, Socials } from "@/types/job"
+import { Job, JobStatus } from "@/types/job"
 import { getJobsAction, addJobAction, updateJobAction, deleteJobAction } from "@/lib/actions/job-actions"
 
 // Use the current local date dynamically
@@ -78,7 +78,6 @@ export function useJobs() {
         status: newJob.status as JobStatus,
         appliedDate: new Date(newJob.appliedDate).toISOString().split("T")[0],
         notes: newJob.notes || "",
-        socials: (newJob.socials as Socials) || { linkedin: "", email: "", x: "" },
         autoGhostDays: newJob.autoGhostDays,
         interactionCount: newJob.interactionCount,
         lastInteractionAt: newJob.lastInteractionAt.toISOString(),

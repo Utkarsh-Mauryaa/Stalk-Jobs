@@ -3,7 +3,7 @@
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import { Job, Socials, JobStatus } from "@/types/job"
+import { Job, JobStatus } from "@/types/job"
 
 export async function addJobAction(data: {
   company: string
@@ -12,7 +12,6 @@ export async function addJobAction(data: {
   status: string
   appliedDate: string
   notes?: string
-  socials?: Socials
   autoGhostDays?: number
   contactEmail?: string | null
 }) {
@@ -32,7 +31,6 @@ export async function addJobAction(data: {
       status: data.status,
       appliedDate: new Date(data.appliedDate),
       notes: data.notes,
-      socials: data.socials,
       autoGhostDays: autoGhostDays,
       userId: session.user.id,
       contactEmail: data.contactEmail,
@@ -112,7 +110,6 @@ export async function getJobsAction() {
     status: job.status as JobStatus,
     appliedDate: job.appliedDate.toISOString().split("T")[0],
     notes: job.notes || "",
-    socials: (job.socials as unknown as Socials) || { linkedin: "", email: "", x: "" },
     autoGhostDays: job.autoGhostDays,
     interactionCount: job.interactionCount,
     lastInteractionAt: job.lastInteractionAt.toISOString(),
@@ -147,7 +144,6 @@ export async function updateJobAction(id: string, data: Partial<Job>) {
       status: data.status,
       appliedDate: data.appliedDate ? new Date(data.appliedDate) : undefined,
       notes: data.notes,
-      socials: data.socials,
       autoGhostDays: data.autoGhostDays !== undefined ? Math.max(7, data.autoGhostDays) : undefined,
       interactionCount: data.interactionCount,
       lastInteractionAt: data.lastInteractionAt ? new Date(data.lastInteractionAt) : undefined,
