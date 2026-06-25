@@ -41,7 +41,7 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence>
                 {jobs.length > 0 ? (
                   jobs.map((job) => (
                     <motion.tr 
@@ -49,7 +49,7 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                       key={job.id} 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
+                      exit={{ opacity: 0, x: -24 }}
                       transition={{ duration: 0.2 }}
                       className="hover:bg-canvas-soft transition-colors group"
                     >
