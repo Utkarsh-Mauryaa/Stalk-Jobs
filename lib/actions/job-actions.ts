@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { Job, JobStatus } from "@/types/job"
 
@@ -19,6 +20,39 @@ export async function addJobAction(data: {
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized")
+  }
+
+  // Server-side input validation
+  if (typeof data.company !== "string" || !data.company.trim() || data.company.length > 200) {
+    throw new Error("Invalid company name. Must be between 1 and 200 characters.")
+  }
+  if (typeof data.role !== "string" || !data.role.trim() || data.role.length > 200) {
+    throw new Error("Invalid role name. Must be between 1 and 200 characters.")
+  }
+  if (typeof data.platform !== "string" || !data.platform.trim() || data.platform.length > 100) {
+    throw new Error("Invalid platform name. Must be between 1 and 100 characters.")
+  }
+  const validStatuses = ["applied", "ongoing", "ghosted", "rejected"]
+  if (typeof data.status !== "string" || !validStatuses.includes(data.status)) {
+    throw new Error("Invalid status.")
+  }
+  if (typeof data.appliedDate !== "string" || isNaN(Date.parse(data.appliedDate))) {
+    throw new Error("Invalid application date format.")
+  }
+  if (data.autoGhostDays !== undefined && data.autoGhostDays !== null) {
+    if (typeof data.autoGhostDays !== "number" || isNaN(data.autoGhostDays) || data.autoGhostDays < 7 || data.autoGhostDays > 365) {
+      throw new Error("Invalid autoGhostDays. Must be an integer between 7 and 365.")
+    }
+  }
+  if (data.contactEmail !== undefined && data.contactEmail !== null && data.contactEmail !== "") {
+    if (typeof data.contactEmail !== "string" || data.contactEmail.length > 255 || !data.contactEmail.includes("@")) {
+      throw new Error("Invalid contact email format.")
+    }
+  }
+  if (data.notes !== undefined && data.notes !== null) {
+    if (typeof data.notes !== "string" || data.notes.length > 10000) {
+      throw new Error("Invalid notes. Maximum length is 10,000 characters.")
+    }
   }
 
   const autoGhostDays = data.autoGhostDays !== undefined ? Math.max(7, data.autoGhostDays) : 14
@@ -63,6 +97,36 @@ export async function getJobsAction(options?: {
         ghosted: 0,
         rejected: 0,
       },
+    }
+  }
+
+  // Server-side input validation
+  if (options) {
+    if (options.page !== undefined) {
+      if (typeof options.page !== "number" || isNaN(options.page) || options.page < 1) {
+        throw new Error("Invalid page number.")
+      }
+    }
+    if (options.limit !== undefined) {
+      if (typeof options.limit !== "number" || isNaN(options.limit) || options.limit < 1 || options.limit > 100) {
+        throw new Error("Invalid limit.")
+      }
+    }
+    if (options.search !== undefined) {
+      if (typeof options.search !== "string" || options.search.length > 100) {
+        throw new Error("Search query must be under 100 characters.")
+      }
+    }
+    if (options.statusFilter !== undefined) {
+      const validFilters = ["all", "applied", "ongoing", "ghosted", "rejected"]
+      if (typeof options.statusFilter !== "string" || !validFilters.includes(options.statusFilter)) {
+        throw new Error("Invalid status filter.")
+      }
+    }
+    if (options.sortOrder !== undefined) {
+      if (options.sortOrder !== "asc" && options.sortOrder !== "desc") {
+        throw new Error("Invalid sort order.")
+      }
     }
   }
 
@@ -117,7 +181,7 @@ export async function getJobsAction(options?: {
   const statusFilter = options?.statusFilter || "all"
   const sortOrder = options?.sortOrder || "desc"
 
-  const whereClause: any = {
+  const whereClause: Prisma.JobWhereInput = {
     userId: session.user.id,
   }
 
@@ -197,6 +261,69 @@ export async function updateJobAction(id: string, data: Partial<Job>) {
     throw new Error("Unauthorized")
   }
 
+  // Validate id
+  if (typeof id !== "string" || !id.trim()) {
+    throw new Error("Invalid job ID.")
+  }
+
+  // Validate any fields present in data
+  if (data.company !== undefined) {
+    if (typeof data.company !== "string" || !data.company.trim() || data.company.length > 200) {
+      throw new Error("Invalid company name. Must be between 1 and 200 characters.")
+    }
+  }
+  if (data.role !== undefined) {
+    if (typeof data.role !== "string" || !data.role.trim() || data.role.length > 200) {
+      throw new Error("Invalid role name. Must be between 1 and 200 characters.")
+    }
+  }
+  if (data.platform !== undefined) {
+    if (typeof data.platform !== "string" || !data.platform.trim() || data.platform.length > 100) {
+      throw new Error("Invalid platform name. Must be between 1 and 100 characters.")
+    }
+  }
+  if (data.status !== undefined) {
+    const validStatuses = ["applied", "ongoing", "ghosted", "rejected"]
+    if (typeof data.status !== "string" || !validStatuses.includes(data.status)) {
+      throw new Error("Invalid status.")
+    }
+  }
+  if (data.appliedDate !== undefined) {
+    if (typeof data.appliedDate !== "string" || isNaN(Date.parse(data.appliedDate))) {
+      throw new Error("Invalid application date format.")
+    }
+  }
+  if (data.autoGhostDays !== undefined) {
+    if (typeof data.autoGhostDays !== "number" || isNaN(data.autoGhostDays) || data.autoGhostDays < 7 || data.autoGhostDays > 365) {
+      throw new Error("Invalid autoGhostDays. Must be an integer between 7 and 365.")
+    }
+  }
+  if (data.contactEmail !== undefined && data.contactEmail !== null && data.contactEmail !== "") {
+    if (typeof data.contactEmail !== "string" || data.contactEmail.length > 255 || !data.contactEmail.includes("@")) {
+      throw new Error("Invalid contact email format.")
+    }
+  }
+  if (data.notes !== undefined && data.notes !== null) {
+    if (typeof data.notes !== "string" || data.notes.length > 10000) {
+      throw new Error("Invalid notes. Maximum length is 10,000 characters.")
+    }
+  }
+  if (data.threadId !== undefined && data.threadId !== null) {
+    if (typeof data.threadId !== "string" || data.threadId.length > 255) {
+      throw new Error("Invalid thread ID.")
+    }
+  }
+  if (data.interactionCount !== undefined) {
+    if (typeof data.interactionCount !== "number" || isNaN(data.interactionCount) || data.interactionCount < 0) {
+      throw new Error("Invalid interaction count.")
+    }
+  }
+  if (data.lastInteractionAt !== undefined) {
+    if (typeof data.lastInteractionAt !== "string" || isNaN(Date.parse(data.lastInteractionAt))) {
+      throw new Error("Invalid last interaction date format.")
+    }
+  }
+
   const job = await db.job.update({
     where: {
       id,
@@ -226,6 +353,11 @@ export async function deleteJobAction(id: string) {
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized")
+  }
+
+  // Validate id
+  if (typeof id !== "string" || !id.trim()) {
+    throw new Error("Invalid job ID.")
   }
 
   // 1. Fetch the job to get its processedMessageIds, threadId, and status

@@ -23,7 +23,10 @@ export async function POST() {
     });
   } catch (error: unknown) {
     console.error("Sync Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to sync jobs";
+    const isProd = process.env.NODE_ENV === "production";
+    const errorMessage = isProd
+      ? "Failed to sync jobs"
+      : (error instanceof Error ? error.message : "Failed to sync jobs");
     return NextResponse.json({ 
       success: false, 
       error: errorMessage 

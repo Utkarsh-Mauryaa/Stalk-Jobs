@@ -26,26 +26,46 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ account }) {
       console.log("SignIn Callback - Account Scope:", account?.scope);
       if (account) {
-        // Update the account in the database with the new tokens and scopes
         try {
-          await db.account.update({
+          // Check if account already exists
+          const existingAccount = await db.account.findUnique({
             where: {
               provider_providerAccountId: {
                 provider: account.provider,
                 providerAccountId: account.providerAccountId,
               },
             },
-            data: {
+          })
+
+          if (existingAccount) {
+            // Update the existing account with new tokens and scopes
+            const updateData: {
+              access_token?: string | null
+              expires_at?: number | null
+              scope?: string | null
+              refresh_token?: string | null
+            } = {
               access_token: account.access_token,
-              refresh_token: account.refresh_token,
               expires_at: account.expires_at,
               scope: account.scope,
-            },
-          })
-          console.log("Successfully updated account with new scopes");
+            }
+            if (account.refresh_token) {
+              updateData.refresh_token = account.refresh_token
+            }
+            await db.account.update({
+              where: {
+                provider_providerAccountId: {
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                },
+              },
+              data: updateData,
+            })
+            console.log("Successfully updated existing account with new scopes");
+          }
         } catch (error) {
           console.error("Failed to update account tokens:", error)
         }
@@ -64,6 +84,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accessToken = account.access_token
       }
       if (user) {
+        token.sub = user.id
         token.picture = user.image
       }
       return token

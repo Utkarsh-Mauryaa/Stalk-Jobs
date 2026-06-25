@@ -53,7 +53,20 @@ export function EmailTrackingCard({ onRefresh }: EmailTrackingCardProps) {
     setSyncCount(0)
     setErrorMessage("")
     try {
-      const res = await fetch('/api/jobs/sync', { method: 'POST' })
+      const getCookie = (name: string) => {
+        if (typeof document === 'undefined') return ''
+        const value = `; ${document.cookie}`
+        const parts = value.split(`; ${name}=`)
+        if (parts.length === 2) return parts.pop()?.split(';').shift() || ''
+        return ''
+      }
+      const csrfToken = getCookie("csrf-token")
+      const res = await fetch('/api/jobs/sync', { 
+        method: 'POST',
+        headers: {
+          'x-csrf-token': csrfToken,
+        }
+      })
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: "Server crashed or returned invalid response" }))
         throw new Error(errorData.error || `Server responded with ${res.status}`)
@@ -77,9 +90,10 @@ export function EmailTrackingCard({ onRefresh }: EmailTrackingCardProps) {
         setStatus('error')
         setTimeout(() => setStatus('connected'), 5000)
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Sync failed", e)
-      setErrorMessage(e.message || "Failed to reach the server. Please check your connection.")
+      const msg = e instanceof Error ? e.message : "Failed to reach the server. Please check your connection."
+      setErrorMessage(msg)
       setStatus('error')
       setTimeout(() => setStatus('connected'), 5000)
     }

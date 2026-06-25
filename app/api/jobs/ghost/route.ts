@@ -46,7 +46,10 @@ export async function POST(req: Request) {
     });
   } catch (error: unknown) {
     console.error("Auto-ghost CRON task failed:", error);
-    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    const isProd = process.env.NODE_ENV === "production";
+    const errorMessage = isProd
+      ? "Internal Server Error"
+      : (error instanceof Error ? error.message : "Internal Server Error");
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
