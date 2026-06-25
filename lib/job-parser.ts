@@ -57,7 +57,7 @@ export async function parseJobEmail(subject: string, body: string, sender: strin
     platform: aiResult.platform || "Direct",
     status: finalStatus,
     appliedDate: isValidDate ? extractedDate : (fallbackDate || new Date()), 
-    notes: `Automatically parsed via StalkJobs AI`,
+    notes: "",
     contactEmail: aiResult.contactEmail
   };
 }
