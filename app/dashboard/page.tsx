@@ -138,10 +138,10 @@ export default function Dashboard() {
             animate="show"
             className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
           >
-            <StatCard label="Applied" value={stats.applied.toString()} />
-            <StatCard label="Ongoing" value={stats.ongoing.toString()} />
-            <StatCard label="Ghosted" value={stats.ghosted.toString()} />
-            <StatCard label="Rejected" value={stats.rejected.toString()} />
+            <StatCard label="Applied" value={stats.applied.toString()} variant="applied" />
+            <StatCard label="Ongoing" value={stats.ongoing.toString()} variant="ongoing" />
+            <StatCard label="Ghosted" value={stats.ghosted.toString()} variant="ghosted" />
+            <StatCard label="Rejected" value={stats.rejected.toString()} variant="rejected" />
           </motion.div>
 
           <DashboardFilters 

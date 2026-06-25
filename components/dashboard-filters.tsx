@@ -50,11 +50,11 @@ export function DashboardFilters({
             onChange={(e) => setStatusFilter(e.target.value)}
             className="h-10 pl-10 pr-8 rounded-md border border-hairline bg-canvas text-sm focus:outline-none focus:ring-1 focus:ring-ink/20 appearance-none min-w-[140px] text-ink cursor-pointer hover:bg-canvas-soft transition-colors"
           >
-            <option value="all">All Statuses</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="applied">Applied</option>
-            <option value="ghosted">Ghosted</option>
-            <option value="rejected">Rejected</option>
+            <option value="all" className="text-ink bg-canvas">All Statuses</option>
+            <option value="ongoing" className="text-warning bg-canvas">Ongoing</option>
+            <option value="applied" className="text-link bg-canvas">Applied</option>
+            <option value="ghosted" className="text-mute bg-canvas">Ghosted</option>
+            <option value="rejected" className="text-error bg-canvas">Rejected</option>
           </select>
           <ChevronDown className="absolute right-3 h-4 w-4 text-mute pointer-events-none" />
         </div>

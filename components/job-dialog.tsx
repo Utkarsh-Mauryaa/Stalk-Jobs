@@ -168,10 +168,10 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
                 onChange={(e) => setJob({ ...job, status: e.target.value as JobStatus })}
                 className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
               >
-                <option value="applied">Applied</option>
-                <option value="ongoing">Ongoing</option>
-                {initialJob && <option value="ghosted">Ghosted</option>}
-                {initialJob && <option value="rejected">Rejected</option>}
+                <option value="applied" className="text-link bg-canvas">Applied</option>
+                <option value="ongoing" className="text-warning bg-canvas">Ongoing</option>
+                {initialJob && <option value="ghosted" className="text-mute bg-canvas">Ghosted</option>}
+                {initialJob && <option value="rejected" className="text-error bg-canvas">Rejected</option>}
               </select>
             </div>
             <div className="grid gap-2">

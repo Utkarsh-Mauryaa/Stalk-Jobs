@@ -15,7 +15,7 @@
   --color-link: #0070f3;
   --color-success: #0070f3;
   --color-error: #ee0000;
-  --color-warning: #f5a623;
+  --color-warning: #facc15;
 
   /* Gradients */
   --color-gradient-develop-start: #007cf0;
@@ -63,6 +63,9 @@
   --color-hairline-strong: #444444;
   --color-body: #a1a1a1;
   --color-mute: #666666;
+  --color-link: #3291ff;
+  --color-error: #ff3333;
+  --color-warning: #facc15;
   --selection-bg: #ffffff;
   --selection-fg: #000000;
 }
