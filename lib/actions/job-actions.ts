@@ -43,11 +43,27 @@ export async function addJobAction(data: {
   return job
 }
 
-export async function getJobsAction() {
+export async function getJobsAction(options?: {
+  page?: number
+  limit?: number
+  search?: string
+  statusFilter?: string
+  sortOrder?: "asc" | "desc"
+}) {
   const session = await auth()
 
   if (!session?.user?.id) {
-    return []
+    return {
+      jobs: [],
+      hasMore: false,
+      totalCount: 0,
+      stats: {
+        applied: 0,
+        ongoing: 0,
+        ghosted: 0,
+        rejected: 0,
+      },
+    }
   }
 
   // Auto-ghost stale active applications in the database
@@ -86,10 +102,43 @@ export async function getJobsAction() {
     console.error("Failed to auto-ghost active jobs in getJobsAction:", error)
   }
 
+  // Get total stats (after auto-ghosting)
+  const [appliedCount, ongoingCount, ghostedCount, rejectedCount] = await Promise.all([
+    db.job.count({ where: { userId: session.user.id } }),
+    db.job.count({ where: { userId: session.user.id, status: "ongoing" } }),
+    db.job.count({ where: { userId: session.user.id, status: "ghosted" } }),
+    db.job.count({ where: { userId: session.user.id, status: "rejected" } }),
+  ])
+
+  // Build filters
+  const page = options?.page || 1
+  const limit = options?.limit || 15
+  const search = options?.search || ""
+  const statusFilter = options?.statusFilter || "all"
+  const sortOrder = options?.sortOrder || "desc"
+
+  const whereClause: any = {
+    userId: session.user.id,
+  }
+
+  if (search) {
+    whereClause.OR = [
+      { company: { contains: search, mode: "insensitive" } },
+      { role: { contains: search, mode: "insensitive" } },
+      { notes: { contains: search, mode: "insensitive" } },
+    ]
+  }
+
+  if (statusFilter !== "all") {
+    whereClause.status = statusFilter
+  }
+
+  const skip = (page - 1) * limit
+
+  const totalFilteredCount = await db.job.count({ where: whereClause })
+
   const jobs = await db.job.findMany({
-    where: {
-      userId: session.user.id,
-    },
+    where: whereClause,
     include: {
       interactions: {
         orderBy: {
@@ -98,11 +147,13 @@ export async function getJobsAction() {
       },
     },
     orderBy: {
-      appliedDate: "desc",
+      appliedDate: sortOrder,
     },
+    skip,
+    take: limit,
   })
 
-  return jobs.map(job => ({
+  const mappedJobs = jobs.map(job => ({
     id: job.id,
     company: job.company,
     role: job.role,
@@ -123,6 +174,20 @@ export async function getJobsAction() {
       date: i.date.toISOString(),
     })),
   })) as Job[]
+
+  const hasMore = skip + jobs.length < totalFilteredCount
+
+  return {
+    jobs: mappedJobs,
+    hasMore,
+    totalCount: totalFilteredCount,
+    stats: {
+      applied: appliedCount,
+      ongoing: ongoingCount,
+      ghosted: ghostedCount,
+      rejected: rejectedCount,
+    }
+  }
 }
 
 export async function updateJobAction(id: string, data: Partial<Job>) {

@@ -14,10 +14,31 @@ interface JobTableProps {
   getEffectiveStatus: (job: Job) => string
   onEdit: (job: Job) => void
   onDelete: (id: string) => void
+  hasMore?: boolean
+  loadingMore?: boolean
+  onLoadMore?: () => void
 }
 
-export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTableProps) {
+export function JobTable({ 
+  jobs, 
+  getEffectiveStatus, 
+  onEdit, 
+  onDelete,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore
+}: JobTableProps) {
   const [emailListJob, setEmailListJob] = useState<Job | null>(null)
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!onLoadMore || loadingMore || !hasMore) return
+    const target = e.currentTarget
+    const threshold = 50 // px from bottom
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight <= threshold
+    if (isNearBottom) {
+      onLoadMore()
+    }
+  }
 
   return (
     <>
@@ -25,19 +46,22 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="rounded-xl border border-hairline bg-canvas shadow-level-1 overflow-hidden"
+        className="rounded-xl border border-hairline bg-canvas shadow-level-1 overflow-hidden mb-6"
       >
-        <div className="overflow-x-auto">
+        <div 
+          className="overflow-auto max-h-[500px]"
+          onScroll={handleScroll}
+        >
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-hairline bg-canvas-soft-2 text-mute">
-                <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Company & Role</th>
-                <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Platform</th>
-                <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Interactions</th>
-                <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Applied On</th>
-                <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Notes</th>
-                <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider text-right">Actions</th>
+                <th className="sticky top-0 z-10 bg-canvas-soft-2 px-6 py-3 text-xs font-mono uppercase tracking-wider">Company & Role</th>
+                <th className="sticky top-0 z-10 bg-canvas-soft-2 px-6 py-3 text-xs font-mono uppercase tracking-wider">Platform</th>
+                <th className="sticky top-0 z-10 bg-canvas-soft-2 px-6 py-3 text-xs font-mono uppercase tracking-wider">Status</th>
+                <th className="sticky top-0 z-10 bg-canvas-soft-2 px-6 py-3 text-xs font-mono uppercase tracking-wider">Interactions</th>
+                <th className="sticky top-0 z-10 bg-canvas-soft-2 px-6 py-3 text-xs font-mono uppercase tracking-wider">Applied On</th>
+                <th className="sticky top-0 z-10 bg-canvas-soft-2 px-6 py-3 text-xs font-mono uppercase tracking-wider">Notes</th>
+                <th className="sticky top-0 z-10 bg-canvas-soft-2 px-6 py-3 text-xs font-mono uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">
@@ -134,12 +158,22 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                   exit={{ opacity: 0 }}
                   key="empty"
                 >
-                  <td colSpan={8} className="px-6 py-12 text-center text-mute italic">
+                  <td colSpan={7} className="px-6 py-12 text-center text-mute italic">
                     No applications found.
                   </td>
                 </motion.tr>
               )}
             </AnimatePresence>
+            {loadingMore && (
+              <tr>
+                <td colSpan={7} className="px-6 py-4 text-center text-sm text-mute">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-mute border-t-ink" />
+                    <span>Loading more applications...</span>
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

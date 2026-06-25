@@ -40,7 +40,10 @@ export default function Dashboard() {
     deleteAllJobs,
     toggleSort,
     getEffectiveStatus,
-    refreshJobs
+    refreshJobs,
+    hasMore,
+    loadingMore,
+    loadMore
   } = useJobs()
 
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -158,6 +161,9 @@ export default function Dashboard() {
             getEffectiveStatus={getEffectiveStatus}
             onEdit={startEditing}
             onDelete={deleteJob}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            onLoadMore={loadMore}
           />
 
           <EmailTrackingCard onRefresh={refreshJobs} />

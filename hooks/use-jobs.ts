@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Job, JobStatus } from "@/types/job"
 import { getJobsAction, addJobAction, updateJobAction, deleteJobAction, deleteAllJobsAction } from "@/lib/actions/job-actions"
 
@@ -9,41 +9,70 @@ export const TODAY = new Date()
 export function useJobs() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [stats, setStats] = useState({
+    applied: 0,
+    ongoing: 0,
+    ghosted: 0,
+    rejected: 0,
+  })
 
-  const fetchJobs = async () => {
+  // Debounce search state
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 300)
+    return () => clearTimeout(handler)
+  }, [search])
+
+  const fetchJobs = async (pageToFetch = 1, isInitial = false) => {
     try {
-      setLoading(true)
-      const fetchedJobs = await getJobsAction()
-      setJobs(fetchedJobs)
+      if (isInitial) {
+        setLoading(true)
+      } else {
+        setLoadingMore(true)
+      }
+
+      const response = await getJobsAction({
+        page: pageToFetch,
+        limit: 15,
+        search: debouncedSearch,
+        statusFilter: statusFilter,
+        sortOrder: sortOrder,
+      })
+
+      if (isInitial) {
+        setJobs(response.jobs)
+        setPage(1)
+      } else {
+        setJobs(prev => {
+          const prevIds = new Set(prev.map(j => j.id))
+          const newJobs = response.jobs.filter(j => !prevIds.has(j.id))
+          return [...prev, ...newJobs]
+        })
+        setPage(pageToFetch)
+      }
+
+      setHasMore(response.hasMore)
+      setStats(response.stats)
     } catch (error) {
       console.error("Failed to fetch jobs:", error)
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
 
+  // Refetch when filters or debounced search changes
   useEffect(() => {
-    let active = true
-    getJobsAction()
-      .then((fetchedJobs) => {
-        if (active) {
-          setJobs(fetchedJobs)
-          setLoading(false)
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to fetch jobs on load:", error)
-        if (active) {
-          setLoading(false)
-        }
-      })
-    return () => {
-      active = false
-    }
-  }, [])
+    fetchJobs(1, true)
+  }, [debouncedSearch, statusFilter, sortOrder])
 
   const getEffectiveStatus = (job: Job) => {
     if (job.status === "rejected") return "rejected"
@@ -57,51 +86,15 @@ export function useJobs() {
     return job.status
   }
 
-  const filteredJobs = useMemo(() => {
-    return jobs
-      .filter(job => {
-        const company = job.company || ""
-        const role = job.role || ""
-        const notes = job.notes || ""
-        const matchesSearch = company.toLowerCase().includes(search.toLowerCase()) || 
-                             role.toLowerCase().includes(search.toLowerCase()) ||
-                             notes.toLowerCase().includes(search.toLowerCase())
-        const matchesStatus = statusFilter === "all" || getEffectiveStatus(job) === statusFilter
-        return matchesSearch && matchesStatus
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.appliedDate).getTime()
-        const dateB = new Date(b.appliedDate).getTime()
-        return sortOrder === "desc" ? dateB - dateA : dateA - dateB
-      })
-  }, [jobs, search, statusFilter, sortOrder])
-
-  const stats = useMemo(() => ({
-    applied: jobs.length,
-    ongoing: jobs.filter(j => getEffectiveStatus(j) === "ongoing").length,
-    ghosted: jobs.filter(j => getEffectiveStatus(j) === "ghosted").length,
-    rejected: jobs.filter(j => getEffectiveStatus(j) === "rejected").length,
-  }), [jobs])
+  const loadMore = () => {
+    if (loading || loadingMore || !hasMore) return
+    fetchJobs(page + 1, false)
+  }
 
   const addJob = async (jobData: Omit<Job, "id">) => {
     try {
-      const newJob = await addJobAction(jobData)
-      const formattedJob: Job = {
-        id: newJob.id,
-        company: newJob.company,
-        role: newJob.role,
-        platform: newJob.platform,
-        status: newJob.status as JobStatus,
-        appliedDate: new Date(newJob.appliedDate).toISOString().split("T")[0],
-        notes: newJob.notes || "",
-        autoGhostDays: newJob.autoGhostDays,
-        interactionCount: newJob.interactionCount,
-        lastInteractionAt: newJob.lastInteractionAt.toISOString(),
-        contactEmail: newJob.contactEmail,
-        processedMessageIds: newJob.processedMessageIds,
-        threadId: newJob.threadId,
-      }
-      setJobs(prev => [formattedJob, ...prev])
+      await addJobAction(jobData)
+      await fetchJobs(1, true)
     } catch (error) {
       console.error("Failed to add job:", error)
     }
@@ -110,7 +103,7 @@ export function useJobs() {
   const updateJob = async (jobData: Job) => {
     try {
       await updateJobAction(jobData.id, jobData)
-      setJobs(prev => prev.map(j => j.id === jobData.id ? jobData : j))
+      await fetchJobs(1, true)
     } catch (error) {
       console.error("Failed to update job:", error)
     }
@@ -119,7 +112,7 @@ export function useJobs() {
   const deleteJob = async (id: string) => {
     try {
       await deleteJobAction(id)
-      setJobs(prev => prev.filter(job => job.id !== id))
+      await fetchJobs(1, true)
     } catch (error) {
       console.error("Failed to delete job:", error)
     }
@@ -129,6 +122,9 @@ export function useJobs() {
     try {
       await deleteAllJobsAction()
       setJobs([])
+      setStats({ applied: 0, ongoing: 0, ghosted: 0, rejected: 0 })
+      setHasMore(false)
+      setPage(1)
     } catch (error) {
       console.error("Failed to delete all jobs:", error)
     }
@@ -141,7 +137,10 @@ export function useJobs() {
   return {
     jobs,
     loading,
-    filteredJobs,
+    loadingMore,
+    hasMore,
+    loadMore,
+    filteredJobs: jobs,
     search,
     setSearch,
     statusFilter,
@@ -155,6 +154,6 @@ export function useJobs() {
     deleteAllJobs,
     toggleSort,
     getEffectiveStatus,
-    refreshJobs: fetchJobs
+    refreshJobs: () => fetchJobs(1, true),
   }
 }
