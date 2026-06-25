@@ -18,22 +18,60 @@ interface GmailPart {
   };
 }
 
+function cleanHtml(html: string): string {
+  // Remove style blocks
+  let clean = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  // Remove script blocks
+  clean = clean.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  // Replace HTML tags with spaces
+  clean = clean.replace(/<[^>]*>/g, ' ');
+  // Replace common HTML entities
+  clean = clean
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&zwnj;/gi, ' ')
+    .replace(/&bull;/gi, '•');
+  // Normalize whitespace
+  return clean.replace(/\s+/g, ' ').trim();
+}
+
 /**
- * Recursively find the plain text body in a Gmail message
+ * Find and decode the message body, prioritizing text/html (cleaned) then text/plain
  */
 function getMessageBody(payload: any): string {
+  // Direct body (leaf node)
   if (payload.body?.data) {
     const base64 = payload.body.data.replace(/-/g, '+').replace(/_/g, '/');
-    return Buffer.from(base64, "base64").toString("utf-8");
+    const decoded = Buffer.from(base64, "base64").toString("utf-8");
+    if (payload.mimeType === "text/html") {
+      return cleanHtml(decoded);
+    }
+    return decoded;
   }
 
+  // Multipart node
   if (payload.parts) {
+    // 1. Search for text/html at this level
     for (const part of payload.parts) {
-      if (part.mimeType === "text/plain") {
-        return getMessageBody(part);
+      if (part.mimeType === "text/html") {
+        const body = getMessageBody(part);
+        if (body) return body;
       }
     }
-    // If no text/plain found at this level, check deeper
+
+    // 2. Search for text/plain at this level
+    for (const part of payload.parts) {
+      if (part.mimeType === "text/plain") {
+        const body = getMessageBody(part);
+        if (body) return body;
+      }
+    }
+
+    // 3. Recurse deeper into parts if neither was found at this level
     for (const part of payload.parts) {
       const body = getMessageBody(part);
       if (body) return body;
@@ -133,10 +171,10 @@ const allProcessedIds = new Set([
 
 const allIgnoredThreadIds = new Set(ignoredThreads.map(t => t.threadId));
 
-// 2. Search for job-related emails
-// We exclude common marketing/newsletter terms AND rejection terms that might re-trigger deleted jobs
-const query = "subject:(application OR interview OR recruiter OR hired OR position OR role OR job) -{newsletter unsubscribe digest \"job alert\" \"daily update\" \"unfortunately\" \"not moving forward\" \"rejected\" \"not selected\"}";
-const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=100`;
+  // 2. Search for job-related emails
+  // We exclude common marketing/newsletter terms, but we keep rejection terms so we can auto-update statuses
+  const query = "subject:(application OR interview OR recruiter OR hired OR position OR role OR job) -{newsletter unsubscribe digest \"job alert\" \"daily update\"}";
+  const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=100`;
 const searchResponse = await fetch(searchUrl, {
   headers: { Authorization: `Bearer ${access_token}` },
 });
@@ -187,9 +225,9 @@ const results = await Promise.all(
         const from = headers.find((h) => h.name === "From")?.value || "";
         const date = new Date(parseInt(fullMsg.internalDate));
         
-        const bodyContent = getMessageBody(fullMsg.payload).substring(0, 1200);
+        const rawBody = getMessageBody(fullMsg.payload);
 
-        const parsed = await parseJobEmail(subject, bodyContent, from, date);
+        const parsed = await parseJobEmail(subject, rawBody, from, date);
         if (!parsed) return null;
 
         console.log(`Sync: Found job - ${parsed.role} at ${parsed.company}`);
@@ -227,6 +265,11 @@ const results = await Promise.all(
           });
           return { ...parsed, company: existing.company, role: existing.role };
         } else {
+          if (parsed.status === "rejected") {
+            console.log(`Sync: Skipping creation of new untracked rejected job for ${parsed.company}`);
+            return null;
+          }
+
           await db.job.create({
             data: { 
               company: parsed.company,

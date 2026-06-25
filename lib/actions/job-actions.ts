@@ -131,10 +131,10 @@ export async function deleteJobAction(id: string) {
     throw new Error("Unauthorized")
   }
 
-  // 1. Fetch the job to get its processedMessageIds and threadId
+  // 1. Fetch the job to get its processedMessageIds, threadId, and status
   const job = await db.job.findUnique({
     where: { id, userId: session.user.id },
-    select: { id: true, processedMessageIds: true, threadId: true }
+    select: { id: true, processedMessageIds: true, threadId: true, status: true }
   })
 
   if (!job) {
@@ -142,31 +142,53 @@ export async function deleteJobAction(id: string) {
     return;
   }
 
-  // 2. Mark the thread as ignored so no other messages in this conversation re-trigger a sync
-  if (job.threadId && db.ignoredThread) {
-    await db.ignoredThread.upsert({
-      where: { userId_threadId: { userId: session.user.id!, threadId: job.threadId } },
-      update: {},
-      create: { userId: session.user.id!, threadId: job.threadId }
-    })
-  }
+  const isTerminalState = job.status === "rejected" || job.status === "ghosted";
 
-  if (job.processedMessageIds.length > 0 && db.processedEmail) {
-    const userId = session.user.id!
-    // 2. Move these IDs to the ProcessedEmail table so they aren't re-synced
-    // Using Promise.all with upsert for maximum compatibility across different DB adapters
-    await Promise.all(
-      job.processedMessageIds.map(messageId => 
-        db.processedEmail.upsert({
-          where: { userId_messageId: { userId, messageId } },
-          update: {},
-          create: { userId, messageId }
-        })
+  if (isTerminalState) {
+    // For terminal states (e.g. rejected/ghosted), we want to make sure the emails
+    // are NOT re-synced in the future if the user deletes the job from their dashboard.
+    
+    // Mark the thread as ignored so no other messages in this conversation re-trigger a sync
+    if (job.threadId && db.ignoredThread) {
+      await db.ignoredThread.upsert({
+        where: { userId_threadId: { userId: session.user.id!, threadId: job.threadId } },
+        update: {},
+        create: { userId: session.user.id!, threadId: job.threadId }
+      })
+    }
+
+    if (job.processedMessageIds.length > 0 && db.processedEmail) {
+      const userId = session.user.id!
+      await Promise.all(
+        job.processedMessageIds.map(messageId => 
+          db.processedEmail.upsert({
+            where: { userId_messageId: { userId, messageId } },
+            update: {},
+            create: { userId, messageId }
+          })
+        )
       )
-    )
-  }
- else if (job.processedMessageIds.length > 0) {
-    console.warn("Delete: db.processedEmail is undefined. Skipping message ID tracking.");
+    }
+  } else {
+    // For active states (applied/ongoing), we want to delete these from ignored/processed lists
+    // so that the email synchronization will be able to pick them up again if needed.
+    if (job.threadId && db.ignoredThread) {
+      await db.ignoredThread.deleteMany({
+        where: {
+          userId: session.user.id!,
+          threadId: job.threadId
+        }
+      })
+    }
+
+    if (job.processedMessageIds.length > 0 && db.processedEmail) {
+      await db.processedEmail.deleteMany({
+        where: {
+          userId: session.user.id!,
+          messageId: { in: job.processedMessageIds }
+        }
+      })
+    }
   }
 
   // 3. Delete the job
