@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Building2, Calendar, StickyNote, Mail } from "lucide-react"
+import { Building2, Calendar, StickyNote, Mail, Pencil, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Job } from "@/types/job"
@@ -37,6 +37,7 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                 <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Interactions</th>
                 <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Applied On</th>
                 <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider">Notes</th>
+                <th className="px-6 py-3 text-xs font-mono uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">
@@ -97,6 +98,31 @@ export function JobTable({ jobs, getEffectiveStatus, onEdit, onDelete }: JobTabl
                         ) : (
                           <span className="text-mute italic">No notes</span>
                         )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => onEdit(job)}
+                          title="Edit Application"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => {
+                            if (confirm("Are you sure you want to delete this application?")) {
+                              onDelete(job.id)
+                            }
+                          }}
+                          title="Delete Application"
+                          className="text-error hover:text-error hover:bg-error/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </td>
                   </motion.tr>

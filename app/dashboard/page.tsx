@@ -11,6 +11,8 @@ import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardFilters } from "@/components/dashboard-filters"
 import { EmailTrackingCard } from "@/components/email-tracking-card"
 import { Job } from "@/types/job"
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 const container = {
   hidden: { opacity: 0 },
@@ -24,6 +26,7 @@ const container = {
 
 export default function Dashboard() {
   const {
+    jobs,
     filteredJobs,
     search,
     setSearch,
@@ -34,6 +37,7 @@ export default function Dashboard() {
     addJob,
     updateJob,
     deleteJob,
+    deleteAllJobs,
     toggleSort,
     getEffectiveStatus,
     refreshJobs
@@ -41,6 +45,7 @@ export default function Dashboard() {
 
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false)
   const [editingJob, setEditingJob] = useState<Job | null>(null)
 
   const handleAddJob = (jobData: JobFormData) => {
@@ -69,6 +74,11 @@ export default function Dashboard() {
     setIsEditOpen(true)
   }
 
+  const handleDeleteAll = async () => {
+    await deleteAllJobs()
+    setIsDeleteAllOpen(false)
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-canvas-soft">
       <Navbar />
@@ -81,6 +91,8 @@ export default function Dashboard() {
         <div className="mx-auto max-w-7xl">
           <DashboardHeader 
             onAddClick={() => setIsAddOpen(true)} 
+            onDeleteAllClick={() => setIsDeleteAllOpen(true)}
+            hasJobs={jobs.length > 0}
           />
 
           <JobDialog 
@@ -101,6 +113,23 @@ export default function Dashboard() {
             title="Edit Application"
             description="Update the details of your application."
           />
+
+          <Dialog open={isDeleteAllOpen} onOpenChange={setIsDeleteAllOpen}>
+            <DialogHeader>
+              <DialogTitle>Delete All Applications</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete all job applications? This action cannot be undone. All your application data, history, and email sync mappings will be permanently cleared.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setIsDeleteAllOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteAll}>
+                Delete All
+              </Button>
+            </DialogFooter>
+          </Dialog>
 
           {/* Stats */}
           <motion.div 

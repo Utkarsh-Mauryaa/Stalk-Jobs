@@ -233,3 +233,34 @@ export async function deleteJobAction(id: string) {
 
   revalidatePath("/dashboard")
 }
+
+export async function deleteAllJobsAction() {
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  // Delete all jobs of the user (Cascade delete handles EmailInteractions)
+  await db.job.deleteMany({
+    where: {
+      userId: session.user.id,
+    },
+  })
+
+  // Delete ignored threads
+  await db.ignoredThread.deleteMany({
+    where: {
+      userId: session.user.id,
+    },
+  })
+
+  // Delete processed email tracking history
+  await db.processedEmail.deleteMany({
+    where: {
+      userId: session.user.id,
+    },
+  })
+
+  revalidatePath("/dashboard")
+}

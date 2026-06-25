@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react"
 import { Job, JobStatus } from "@/types/job"
-import { getJobsAction, addJobAction, updateJobAction, deleteJobAction } from "@/lib/actions/job-actions"
+import { getJobsAction, addJobAction, updateJobAction, deleteJobAction, deleteAllJobsAction } from "@/lib/actions/job-actions"
 
 // Use the current local date dynamically
 export const TODAY_STR = new Date().toISOString().split("T")[0]
@@ -26,7 +26,23 @@ export function useJobs() {
   }
 
   useEffect(() => {
-    fetchJobs()
+    let active = true
+    getJobsAction()
+      .then((fetchedJobs) => {
+        if (active) {
+          setJobs(fetchedJobs)
+          setLoading(false)
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to fetch jobs on load:", error)
+        if (active) {
+          setLoading(false)
+        }
+      })
+    return () => {
+      active = false
+    }
   }, [])
 
   const getEffectiveStatus = (job: Job) => {
@@ -109,6 +125,15 @@ export function useJobs() {
     }
   }
 
+  const deleteAllJobs = async () => {
+    try {
+      await deleteAllJobsAction()
+      setJobs([])
+    } catch (error) {
+      console.error("Failed to delete all jobs:", error)
+    }
+  }
+
   const toggleSort = () => {
     setSortOrder(prev => prev === "desc" ? "asc" : "desc")
   }
@@ -127,6 +152,7 @@ export function useJobs() {
     addJob,
     updateJob,
     deleteJob,
+    deleteAllJobs,
     toggleSort,
     getEffectiveStatus,
     refreshJobs: fetchJobs

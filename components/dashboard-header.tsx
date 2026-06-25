@@ -1,14 +1,16 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Plus } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface DashboardHeaderProps {
   onAddClick: () => void
+  onDeleteAllClick: () => void
+  hasJobs: boolean
 }
 
-export function DashboardHeader({ onAddClick }: DashboardHeaderProps) {
+export function DashboardHeader({ onAddClick, onDeleteAllClick, hasJobs }: DashboardHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
       <motion.div
@@ -21,9 +23,19 @@ export function DashboardHeader({ onAddClick }: DashboardHeaderProps) {
       <motion.div 
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex flex-wrap gap-3"
+        className="flex flex-wrap items-center gap-3"
       >
-        <Button size="sm" className="gap-2" onClick={onAddClick}>
+        {hasJobs && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2 text-error hover:text-error hover:bg-error/5 hover:border-error/30" 
+            onClick={onDeleteAllClick}
+          >
+            <Trash2 className="h-4 w-4" /> Delete All
+          </Button>
+        )}
+        <Button size="sm" className="gap-2 animate-none" onClick={onAddClick}>
           <Plus className="h-4 w-4" /> Add Application
         </Button>
       </motion.div>
