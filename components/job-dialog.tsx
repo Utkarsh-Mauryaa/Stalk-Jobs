@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { 
   Dialog,
@@ -128,25 +129,28 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
           <div className="grid gap-2">
             <label htmlFor="platform" className="text-sm font-medium text-ink">Platform</label>
             <div className="flex gap-2">
-              <select
-                id="platform"
-                value={isOtherPlatform ? "Other" : job.platform}
-                onChange={(e) => {
-                  const val = e.target.value
-                  if (val === "Other") {
-                    setIsOtherPlatform(true)
-                  } else {
-                    setIsOtherPlatform(false)
-                    setJob({ ...job, platform: val })
-                  }
-                }}
-                className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
-              >
-                {PLATFORMS.map(p => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-                <option value="Other">Other</option>
-              </select>
+              <div className="relative w-full">
+                <select
+                  id="platform"
+                  value={isOtherPlatform ? "Other" : job.platform}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (val === "Other") {
+                      setIsOtherPlatform(true)
+                    } else {
+                      setIsOtherPlatform(false)
+                      setJob({ ...job, platform: val })
+                    }
+                  }}
+                  className="h-10 w-full rounded-md border border-hairline bg-canvas pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20 appearance-none cursor-pointer"
+                >
+                  {PLATFORMS.map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                  <option value="Other">Other</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mute pointer-events-none" />
+              </div>
               {isOtherPlatform && (
                 <input
                   required
@@ -162,17 +166,20 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <label htmlFor="status" className="text-sm font-medium text-ink">Status</label>
-              <select
-                id="status"
-                value={job.status || "applied"}
-                onChange={(e) => setJob({ ...job, status: e.target.value as JobStatus })}
-                className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20"
-              >
-                <option value="applied" className="text-link bg-canvas">Applied</option>
-                <option value="ongoing" className="text-warning bg-canvas">Ongoing</option>
-                {initialJob && <option value="ghosted" className="text-mute bg-canvas">Ghosted</option>}
-                {initialJob && <option value="rejected" className="text-error bg-canvas">Rejected</option>}
-              </select>
+              <div className="relative w-full">
+                <select
+                  id="status"
+                  value={job.status || "applied"}
+                  onChange={(e) => setJob({ ...job, status: e.target.value as JobStatus })}
+                  className="h-10 w-full rounded-md border border-hairline bg-canvas pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ink/20 appearance-none cursor-pointer"
+                >
+                  <option value="applied" className="text-link bg-canvas">Applied</option>
+                  <option value="ongoing" className="text-warning bg-canvas">Ongoing</option>
+                  {initialJob && <option value="ghosted" className="text-mute bg-canvas">Ghosted</option>}
+                  {initialJob && <option value="rejected" className="text-error bg-canvas">Rejected</option>}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mute pointer-events-none" />
+              </div>
             </div>
             <div className="grid gap-2">
               <label htmlFor="date" className="text-sm font-medium text-ink">Applied Date</label>
