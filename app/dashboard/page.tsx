@@ -84,13 +84,14 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas-soft">
+    <div className="relative flex min-h-screen flex-col bg-canvas-soft overflow-hidden">
+      <div className="absolute inset-0 mesh-gradient opacity-80 dark:opacity-30 pointer-events-none" />
       <Navbar />
       
       <motion.main 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-1 p-4 sm:p-6 lg:p-8"
+        className="relative z-10 flex-1 p-4 sm:p-6 lg:p-8"
       >
         <div className="mx-auto max-w-7xl">
           <DashboardHeader 
