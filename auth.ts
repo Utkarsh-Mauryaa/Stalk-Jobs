@@ -1,31 +1,17 @@
 import NextAuth from "next-auth"
-import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { db } from "@/lib/db"
+import { authConfig } from "@/auth.config"
 
 if (!process.env.AUTH_GOOGLE_ID || !process.env.AUTH_GOOGLE_SECRET) {
   console.warn("Missing Google OAuth environment variables. Authentication will not work.")
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(db),
-  session: { strategy: "jwt" },
-  secret: process.env.AUTH_SECRET,
-  providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-          scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly"
-        }
-      }
-    }),
-  ],
   callbacks: {
+    ...authConfig.callbacks,
     async signIn({ account }) {
       console.log("SignIn Callback - Account Scope:", account?.scope);
       if (account) {
@@ -72,26 +58,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true
     },
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub
-        session.user.image = (token.picture as string | null) || (token.image as string | null) || null
-      }
-      return session
-    },
-    async jwt({ token, user, account }) {
-      if (account) {
-        token.accessToken = account.access_token
-      }
-      if (user) {
-        token.sub = user.id
-        token.picture = user.image
-      }
-      return token
-    },
-  },
-  pages: {
-    signIn: "/",
   },
   debug: true,
 })

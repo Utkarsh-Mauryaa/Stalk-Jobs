@@ -1,5 +1,8 @@
-import { auth } from "@/auth"
+import { authConfig } from "@/auth.config"
+import NextAuth from "next-auth"
 import { NextResponse } from "next/server"
+
+const { auth } = NextAuth(authConfig)
 
 // Simple in-memory store for rate limiting
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
