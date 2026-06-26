@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -12,6 +13,13 @@ interface DialogProps {
 }
 
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+  }, [])
+
   React.useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden"
@@ -23,10 +31,14 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     }
   }, [open])
 
-  return (
+  if (!mounted) {
+    return null
+  }
+
+  return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -51,7 +63,8 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
 
@@ -68,5 +81,5 @@ export function DialogDescription({ className, ...props }: React.HTMLAttributes<
 }
 
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 pt-0", className)} {...props} />
+  return <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-2 p-6 pt-0", className)} {...props} />
 }

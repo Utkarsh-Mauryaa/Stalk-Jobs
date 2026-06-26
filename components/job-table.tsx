@@ -293,7 +293,7 @@ export function JobTable({
             Are you sure you want to delete your application for <span className="font-semibold text-ink">{deleteConfirmJob?.role}</span> at <span className="font-semibold text-ink">{deleteConfirmJob?.company}</span>? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button variant="secondary" onClick={() => setDeleteConfirmJob(null)}>
             Cancel
           </Button>
