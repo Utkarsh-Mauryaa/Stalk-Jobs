@@ -28,6 +28,7 @@ export default function Dashboard() {
   const {
     jobs,
     filteredJobs,
+    loading,
     search,
     setSearch,
     statusFilter,
@@ -164,6 +165,7 @@ export default function Dashboard() {
             hasMore={hasMore}
             loadingMore={loadingMore}
             onLoadMore={loadMore}
+            loading={loading}
           />
 
           <EmailTrackingCard onRefresh={refreshJobs} />
