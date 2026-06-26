@@ -39,8 +39,13 @@ export function DashboardFilters({
         />
       </div>
       <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
-        <Button variant="secondary" size="sm" onClick={toggleSort} className="gap-2 w-full sm:min-w-[140px] justify-center">
-          {sortOrder === "desc" ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+        <Button 
+          variant="secondary" 
+          onClick={toggleSort} 
+          style={{ borderRadius: "var(--radius-md)" }}
+          className="gap-2 w-full sm:min-w-[160px] justify-center"
+        >
+          {sortOrder === "desc" ? <ChevronDown className="h-4 w-4 -ml-1 mr-1" /> : <ChevronUp className="h-4 w-4 -ml-1 mr-1" />}
           Sort: {sortOrder === "desc" ? "Newest" : "Oldest"}
         </Button>
         <div className="relative flex items-center w-full sm:w-auto">
@@ -48,7 +53,7 @@ export function DashboardFilters({
           <select
             value={statusFilter || "all"}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 pl-10 pr-8 rounded-md border border-hairline bg-canvas text-sm focus:outline-none focus:ring-1 focus:ring-ink/20 appearance-none w-full sm:min-w-[140px] text-ink cursor-pointer hover:bg-canvas-soft transition-colors"
+            className="h-10 pl-8 pr-8 text-center rounded-md border border-hairline bg-canvas text-sm focus:outline-none focus:ring-1 focus:ring-ink/20 appearance-none w-full sm:min-w-[160px] text-ink cursor-pointer hover:bg-canvas-soft transition-colors"
           >
             <option value="all" className="text-ink bg-canvas">All Statuses</option>
             <option value="ongoing" className="text-warning bg-canvas">Ongoing</option>
