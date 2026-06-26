@@ -109,7 +109,7 @@ export default function AboutPage() {
               <div className="border border-hairline bg-canvas-soft/50 rounded-xl p-8 backdrop-blur-sm">
                 <h2 className="text-2xl font-bold tracking-tight text-ink mb-4">How it works under the hood</h2>
                 <p className="text-body leading-7">
-                  {APP_NAME} leverages state-of-the-art email parsing algorithms. When you sync your inbox, our secure worker identifies job-related communication patterns—such as messages containing &quot;application received&quot;, &quot;interview request&quot;, or &quot;status update&quot;.
+                  {APP_NAME}  leverages state-of-the-art email parsing algorithms. When you sync your inbox, our secure worker identifies job-related communication patterns, such as messages containing &quot;application received&quot;, &quot;interview request&quot;, or &quot;status update&quot;.
                 </p>
                 <p className="mt-4 text-body leading-7">
                   Our algorithm extracts the company name, role description, and application timeline. It compiles this information on your secure, private dashboard, letting you stay organized without running any spreadsheets.
