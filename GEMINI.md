@@ -34,8 +34,8 @@ StalkJobs is a modern, zero-manual-effort job application tracker that integrate
 
 - **Email Automation:** Automatic detection of application-related emails.
 - **Ghost Detection:** Automated marking of inactive applications.
-- **Smart CRM:** Identification of hiring manager contact info.
-- **Dashboard:** Real-time view of application statuses.
+- **Multi-Platform Support:** Parsing and tracking from LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, and more.
+- **Unified Dashboard:** Real-time view of application statuses and funnel metrics.
 
 ## Development Workflow
 

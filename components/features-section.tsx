@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Mail, Zap, Search } from "lucide-react"
+import { Mail, Zap, Briefcase } from "lucide-react"
 import { FeatureCard } from "./feature-card"
 
 const container = {
@@ -48,10 +48,10 @@ export function FeaturesSection() {
             badge="Smart"
           />
           <FeatureCard 
-            icon={<Search className="h-6 w-6 text-success" />}
-            title="Smart CRM"
-            description="We find the hiring manager behind the post. Get direct LinkedIn profiles, X handles, and verified emails in one click."
-            badge="Verified"
+            icon={<Briefcase className="h-6 w-6 text-success" />}
+            title="Multi-Platform Support"
+            description="Whether you apply on LinkedIn, Indeed, Greenhouse, Lever, Workday, or Ashby, our parser maps the application details automatically."
+            badge="Universal"
           />
         </motion.div>
       </div>
