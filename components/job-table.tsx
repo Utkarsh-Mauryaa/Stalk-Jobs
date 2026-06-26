@@ -8,6 +8,7 @@ import { Job } from "@/types/job"
 import { formatDate } from "@/lib/utils"
 import { useState } from "react"
 import { EmailListDialog } from "./email-list-dialog"
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 
 interface JobTableProps {
   jobs: Job[]
@@ -31,6 +32,7 @@ export function JobTable({
   loading = false
 }: JobTableProps) {
   const [emailListJob, setEmailListJob] = useState<Job | null>(null)
+  const [deleteConfirmJob, setDeleteConfirmJob] = useState<Job | null>(null)
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (!onLoadMore || loadingMore || !hasMore) return
@@ -148,11 +150,7 @@ export function JobTable({
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                onClick={() => {
-                                  if (confirm("Are you sure you want to delete this application?")) {
-                                    onDelete(job.id)
-                                  }
-                                }}
+                                onClick={() => setDeleteConfirmJob(job)}
                                 title="Delete Application"
                                 className="text-error hover:text-error hover:bg-error/10"
                               >
@@ -251,11 +249,7 @@ export function JobTable({
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              onClick={() => {
-                                if (confirm("Are you sure you want to delete this application?")) {
-                                  onDelete(job.id)
-                                }
-                              }}
+                              onClick={() => setDeleteConfirmJob(job)}
                               title="Delete Application"
                               className="h-8 w-8 text-error hover:text-error hover:bg-error/10"
                             >
@@ -291,6 +285,31 @@ export function JobTable({
         onOpenChange={(open) => !open && setEmailListJob(null)} 
         job={emailListJob} 
       />
+
+      <Dialog open={!!deleteConfirmJob} onOpenChange={(open) => !open && setDeleteConfirmJob(null)}>
+        <DialogHeader>
+          <DialogTitle>Delete Application</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete your application for <span className="font-semibold text-ink">{deleteConfirmJob?.role}</span> at <span className="font-semibold text-ink">{deleteConfirmJob?.company}</span>? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="secondary" onClick={() => setDeleteConfirmJob(null)}>
+            Cancel
+          </Button>
+          <Button 
+            variant="destructive" 
+            onClick={() => {
+              if (deleteConfirmJob) {
+                onDelete(deleteConfirmJob.id)
+                setDeleteConfirmJob(null)
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </DialogFooter>
+      </Dialog>
     </>
   )
 }
