@@ -43,7 +43,8 @@ export default auth((req) => {
 
   // 1. CORS check for all API routes (except next-auth internal APIs under /api/auth)
   if (isApiRoute && !isAuthApi) {
-    const isAllowedOrigin = origin ? ALLOWED_ORIGINS.includes(origin) : true
+    // A request is allowed if it is same-origin (origin matches the server's own origin) OR if it matches one of the trusted origins
+    const isAllowedOrigin = origin ? (origin === url.origin || ALLOWED_ORIGINS.includes(origin)) : true
 
     // Handle Preflight OPTIONS Request
     if (method === "OPTIONS") {
@@ -106,7 +107,7 @@ export default auth((req) => {
   const response = NextResponse.next()
 
   // Apply CORS headers for actual API response if valid origin is present
-  if (isApiRoute && !isAuthApi && origin && ALLOWED_ORIGINS.includes(origin)) {
+  if (isApiRoute && !isAuthApi && origin && (origin === url.origin || ALLOWED_ORIGINS.includes(origin))) {
     response.headers.set("Access-Control-Allow-Origin", origin)
     response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-csrf-token")
   }
