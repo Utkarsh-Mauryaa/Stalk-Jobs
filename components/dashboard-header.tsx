@@ -28,14 +28,13 @@ export function DashboardHeader({ onAddClick, onDeleteAllClick, hasJobs }: Dashb
         {hasJobs && (
           <Button 
             variant="outline" 
-            size="sm" 
-            className="gap-2 text-error hover:text-error hover:bg-error/5 hover:border-error/30" 
+            className="gap-2 text-error border-error/30 hover:bg-error/5 hover:border-error/50" 
             onClick={onDeleteAllClick}
           >
             <Trash2 className="h-4 w-4" /> Delete All
           </Button>
         )}
-        <Button size="sm" className="gap-2 animate-none" onClick={onAddClick}>
+        <Button className="gap-2 animate-none" onClick={onAddClick}>
           <Plus className="h-4 w-4" /> Add Application
         </Button>
       </motion.div>
