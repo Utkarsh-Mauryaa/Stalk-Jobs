@@ -4,12 +4,12 @@ import path from "path";
 
 // Image metadata for Next.js to generate <link> tags and output file config
 export const size = {
-  width: 512,
-  height: 512,
+  width: 1024,
+  height: 1024,
 };
 export const contentType = "image/png";
 
-// Programmatic icon generation that resizes the high-res favicon.png down to 512x512
+// Programmatic icon generation that resizes the high-res favicon.png down to 1024x1024
 export default function Icon() {
   const imagePath = path.join(process.cwd(), "public/favicon.png");
   const imageBuffer = fs.readFileSync(imagePath);
@@ -32,8 +32,8 @@ export default function Icon() {
         <img
           src={dataUrl}
           alt="StalkJobs Favicon"
-          width="512"
-          height="512"
+          width="1024"
+          height="1024"
           style={{
             width: "100%",
             height: "100%",
