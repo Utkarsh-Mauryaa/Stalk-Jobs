@@ -103,7 +103,7 @@ export function EmailTrackingCard({ onRefresh }: EmailTrackingCardProps) {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mt-12 overflow-hidden rounded-2xl border border-hairline bg-canvas shadow-sm"
+      className="mt-24 overflow-hidden rounded-2xl border border-hairline bg-canvas shadow-sm"
     >
       <div className="flex flex-col md:flex-row">
         <div className="flex-1 p-6 sm:p-8">
