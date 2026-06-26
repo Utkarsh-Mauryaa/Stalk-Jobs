@@ -21,8 +21,24 @@ export async function POST() {
       count: jobs.length,
       jobs: jobs 
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error("Sync Error:", error);
+    
+    const isRateLimit = error?.status === 429 || error?.statusCode === 429 || error?.message?.toLowerCase().includes("rate limit") || error?.message?.toLowerCase().includes("too many requests");
+    
+    if (isRateLimit) {
+      const retryAfter = error.retryAfter ?? 60;
+      const isGemini = !!process.env.GEMINI_API_KEY;
+      const provider = isGemini ? "Gemini" : "Minimax";
+      return NextResponse.json({
+        success: false,
+        error: `${provider} AI rate limit reached. Please try again later.`,
+        rateLimit: true,
+        retryAfter: retryAfter,
+        provider: provider
+      }, { status: 429 });
+    }
+
     const isProd = process.env.NODE_ENV === "production";
     const errorMessage = isProd
       ? "Failed to sync jobs"

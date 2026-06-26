@@ -141,15 +141,107 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
     }
   } catch (error: any) {
     // Handle 429 Too Many Requests
-    if (error.status === 429 && retryCount < 3) {
+    const is429 = error.status === 429 || error.statusCode === 429 || error.message?.toLowerCase().includes("rate limit") || error.message?.toLowerCase().includes("too many requests") || error.message?.includes("429");
+    
+    if (is429 && retryCount < 3) {
       const delay = Math.pow(2, retryCount) * 2000; // 2s, 4s, 8s
       console.warn(`Rate limit hit (429). Retrying in ${delay}ms... (Attempt ${retryCount + 1}/3)`);
       await sleep(delay);
       return parseJobWithAI(emailSubject, emailBody, sender, retryCount + 1);
     }
 
+    if (is429) {
+      // Decorate error with status and retryAfter
+      error.status = 429;
+      error.retryAfter = extractRetryAfter(error);
+    }
+
     console.error("AI Parsing Error:", error.message || error);
     throw error; // Rethrow so the caller knows it failed and doesn't mark the email as processed
   }
+}
+
+export function extractRetryAfter(error: any): number {
+  if (error.headers) {
+    const retryAfterHeader = error.headers['retry-after'];
+    if (retryAfterHeader) {
+      const parsed = parseInt(retryAfterHeader, 10);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+
+    const resetHeader = error.headers['x-ratelimit-reset'] || error.headers['x-ratelimit-reset-requests'] || error.headers['x-ratelimit-reset-tokens'];
+    if (resetHeader) {
+      const parsed = parseInt(resetHeader, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        if (parsed > 1000000000) {
+          const diff = Math.ceil(parsed - Date.now() / 1000);
+          return diff > 0 ? diff : 60;
+        }
+        return parsed;
+      }
+    }
+  }
+
+  if (error.response?.headers) {
+    const retryAfter = error.response.headers.get?.('retry-after') || error.response.headers['retry-after'];
+    if (retryAfter) {
+      const parsed = parseInt(retryAfter, 10);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+  }
+
+  const msg = (error.message || "").toLowerCase();
+
+  // 1. Try to find durations after "try again in" or "retry in" or "retry after"
+  // Look for combined patterns like "1m5.2s" or "2m 15s"
+  const comboMatch = msg.match(/(?:try again in|retry after|retry in|in|after)\s*(\d+)\s*m(?:in|utes?)?\s*(\d+(?:\.\d+)?)\s*s(?:ec|onds?)?/);
+  if (comboMatch) {
+    const mins = parseInt(comboMatch[1], 10);
+    const secs = parseFloat(comboMatch[2]);
+    return Math.ceil(mins * 60 + secs);
+  }
+
+  // Look for minutes only like "1.5m", "2 minutes", "1 min"
+  const minMatch = msg.match(/(?:try again in|retry after|retry in|in|after)\s*(\d+(?:\.\d+)?)\s*m(?:in|utes?)?/);
+  if (minMatch) {
+    return Math.ceil(parseFloat(minMatch[1]) * 60);
+  }
+
+  // Look for seconds only like "5.2s", "30 seconds", "12s", "12 sec"
+  const secMatch = msg.match(/(?:try again in|retry after|retry in|in|after)\s*(\d+(?:\.\d+)?)\s*s(?:ec|onds?)?/);
+  if (secMatch) {
+    return Math.ceil(parseFloat(secMatch[1]));
+  }
+
+  // Look for milliseconds only like "5200ms"
+  const msMatch = msg.match(/(?:try again in|retry after|retry in|in|after)\s*(\d+(?:\.\d+)?)\s*ms/);
+  if (msMatch) {
+    return Math.ceil(parseFloat(msMatch[1]) / 1000);
+  }
+
+  // 2. Fallbacks (wider checks without "try again" prefix)
+  const fallbackCombo = msg.match(/(\d+)\s*(?:minute|min|m)\s*(\d+(?:\.\d+)?)\s*(?:second|sec|s)/);
+  if (fallbackCombo) {
+    const mins = parseInt(fallbackCombo[1], 10);
+    const secs = parseFloat(fallbackCombo[2]);
+    return Math.ceil(mins * 60 + secs);
+  }
+
+  const fallbackMin = msg.match(/(\d+(?:\.\d+)?)\s*(?:minute|min|m\b)/);
+  if (fallbackMin) {
+    return Math.ceil(parseFloat(fallbackMin[1]) * 60);
+  }
+
+  const fallbackSec = msg.match(/(\d+(?:\.\d+)?)\s*(?:second|sec|s\b)/);
+  if (fallbackSec) {
+    return Math.ceil(parseFloat(fallbackSec[1]));
+  }
+
+  const fallbackHr = msg.match(/(\d+(?:\.\d+)?)\s*(?:hour|hr|h\b)/);
+  if (fallbackHr) {
+    return Math.ceil(parseFloat(fallbackHr[1]) * 3600);
+  }
+
+  return 60; // 60 seconds default
 }
 

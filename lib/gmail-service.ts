@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { parseJobEmail, ParsedJob } from "./job-parser";
+import { extractRetryAfter } from "./ai";
 
 interface GmailMessage {
   id: string;
@@ -338,8 +339,16 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
 
         results.push(parsed);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(`Sync: Error processing ${msg.id}:`, err);
+      const isRateLimit = err?.status === 429 || err?.statusCode === 429 || err?.message?.toLowerCase().includes("rate limit") || err?.message?.toLowerCase().includes("too many requests") || err?.message?.includes("429");
+      if (isRateLimit) {
+        if (!err.status) err.status = 429;
+        if (err.retryAfter === undefined) {
+          err.retryAfter = extractRetryAfter(err);
+        }
+        throw err;
+      }
     }
   }
 
