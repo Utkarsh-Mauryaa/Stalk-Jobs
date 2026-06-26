@@ -15,13 +15,20 @@ export function Footer() {
           {/* Logo & Info column */}
           <div className="md:col-span-1 flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <div className="h-14 w-20 relative overflow-hidden">
+              <div className="h-20 w-20 relative overflow-hidden">
                 <Image 
                   src="/StalkBlue.png" 
                   alt={`${APP_NAME} Logo`} 
                   fill
                   sizes="80px"
-                  className="object-contain object-left dark:brightness-0 dark:invert transition-[filter]"
+                  className="object-contain object-left dark:hidden"
+                />
+                <Image 
+                  src="/StalkBlueDard.png" 
+                  alt={`${APP_NAME} Logo`} 
+                  fill
+                  sizes="80px"
+                  className="object-contain object-left hidden dark:block"
                 />
               </div>
               <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>

@@ -30,12 +30,12 @@ export function Navbar() {
         animate={{ y: 0, opacity: 1 }}
         className="sticky top-0 z-50 w-full border-b border-hairline bg-canvas/80 backdrop-blur-md"
       >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 group">
             <motion.div 
               whileHover={{ scale: 1.05 }}
-              className="h-16 w-24 relative overflow-hidden"
+              className="h-20 w-20 relative overflow-hidden"
             >
               <Image 
                 src="/StalkBlue.png" 
@@ -43,7 +43,15 @@ export function Navbar() {
                 fill
                 sizes="96px"
                 priority
-                className="object-contain object-left dark:brightness-0 dark:invert transition-[filter]"
+                className="object-contain object-left dark:hidden"
+              />
+              <Image 
+                src="/StalkBlueDard.png" 
+                alt={`${APP_NAME} Logo`} 
+                fill
+                sizes="96px"
+                priority
+                className="object-contain object-left hidden dark:block"
               />
             </motion.div>
           </Link>
