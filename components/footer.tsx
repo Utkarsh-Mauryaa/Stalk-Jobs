@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useSession } from "next-auth/react"
 import { APP_NAME } from "@/constants"
 
@@ -14,7 +15,15 @@ export function Footer() {
           {/* Logo & Info column */}
           <div className="md:col-span-1 flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <div className="h-5 w-5 rounded-sm bg-ink" />
+              <div className="h-14 w-20 relative overflow-hidden">
+                <Image 
+                  src="/StalkBlue.png" 
+                  alt={`${APP_NAME} Logo`} 
+                  fill
+                  sizes="80px"
+                  className="object-contain object-left dark:brightness-0 dark:invert transition-[filter]"
+                />
+              </div>
               <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
             </div>
             <p className="text-xs text-mute leading-relaxed max-w-xs">

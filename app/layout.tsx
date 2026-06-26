@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "StalkJobs - Automate Your Job Hunt",
   description: "The zero-effort job application tracker that syncs with your inbox.",
+  icons: {
+    icon: "/StalkBlue.png",
+  },
 };
 
 export default function RootLayout({

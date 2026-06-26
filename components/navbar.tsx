@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { signIn, signOut, useSession } from "next-auth/react"
@@ -33,10 +34,18 @@ export function Navbar() {
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 group">
             <motion.div 
-              whileHover={{ rotate: 90 }}
-              className="h-6 w-6 rounded-sm bg-ink transition-colors group-hover:bg-ink/90" 
-            />
-            <span className="text-lg font-semibold tracking-tight">{APP_NAME}</span>
+              whileHover={{ scale: 1.05 }}
+              className="h-16 w-24 relative overflow-hidden"
+            >
+              <Image 
+                src="/StalkBlue.png" 
+                alt={`${APP_NAME} Logo`} 
+                fill
+                sizes="96px"
+                priority
+                className="object-contain object-left dark:brightness-0 dark:invert transition-[filter]"
+              />
+            </motion.div>
           </Link>
           <div className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-sm text-body hover:text-ink transition-colors relative group">
