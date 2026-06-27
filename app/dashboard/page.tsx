@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { motion } from "framer-motion"
 import { useJobs, TODAY_STR } from "@/hooks/use-jobs"
@@ -25,6 +27,15 @@ const container = {
 }
 
 export default function Dashboard() {
+  const { status } = useSession()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/")
+    }
+  }, [status, router])
+
   const {
     jobs,
     filteredJobs,

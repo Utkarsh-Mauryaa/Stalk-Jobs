@@ -58,6 +58,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true
     },
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        // Verify user exists in the database
+        const userExists = await db.user.findUnique({
+          where: { id: token.sub },
+          select: { id: true },
+        })
+        if (!userExists) {
+          return null as any
+        }
+        session.user.id = token.sub
+        session.user.image = (token.picture as string | null) || (token.image as string | null) || null
+      }
+      return session
+    },
   },
   debug: true,
 })
