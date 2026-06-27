@@ -174,7 +174,7 @@ const allIgnoredThreadIds = new Set(ignoredThreads.map(t => t.threadId));
 
   // 2. Search for job-related emails
   // We exclude common marketing/newsletter terms, but we keep rejection terms so we can auto-update statuses
-  const query = "subject:(application OR interview OR recruiter OR hired OR position OR role OR job OR applied OR apply) -subject:(\"job alert\" OR \"job alerts\" OR digest OR newsletter OR \"daily update\" OR \"weekly update\" OR \"jobs matching\" OR \"jobs you might like\" OR \"recommended jobs\" OR \"new jobs for you\")";
+  const query = "(subject:(application OR interview OR recruiter OR hired OR position OR role OR job OR applied OR apply) OR \"thank you for applying\" OR \"thanks for applying\" OR \"thank you for submitting\" OR \"submitting your application\" OR \"submitted your application\" OR \"application received\" OR \"received your application\" OR \"your application for\" OR \"successfully submitted\" OR \"not moving forward\" OR \"move forward with other\" OR \"schedule an interview\" OR \"invitation to interview\" OR \"interview invite\") -subject:(\"job alert\" OR \"job alerts\" OR digest OR newsletter OR \"daily update\" OR \"weekly update\" OR \"jobs matching\" OR \"jobs you might like\" OR \"recommended jobs\" OR \"new jobs for you\")";
   const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=100`;
   const searchResponse = await fetch(searchUrl, {
     headers: { Authorization: `Bearer ${access_token}` },
