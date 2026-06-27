@@ -36,7 +36,7 @@ export function HowItWorksSection() {
           <Step 
             number="01"
             title="Connect"
-            description="Sign up with the email you use for job applications. No complex filters required."
+            description="Connect a dedicated email address exclusively used for job applications for absolute peace of mind."
           />
           <Step 
             number="02"

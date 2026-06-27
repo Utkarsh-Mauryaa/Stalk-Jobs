@@ -1,14 +1,17 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { LogoMarquee } from "@/components/logo-marquee"
-import { signIn, useSession } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { EmailWarningDialog } from "@/components/email-warning-dialog"
 
 export function Hero() {
   const { data: session } = useSession()
+  const [isEmailWarningOpen, setIsEmailWarningOpen] = useState(false)
 
   return (
     <section className="relative overflow-hidden pt-20 pb-32 lg:pt-32 lg:pb-48 mesh-gradient">
@@ -62,7 +65,7 @@ export function Hero() {
               <Button 
                 size="lg" 
                 className="gap-2 group"
-                onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                onClick={() => setIsEmailWarningOpen(true)}
               >
                 Get Started <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -73,12 +76,14 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.6 }}
-            className="w-full"
+            className="w-full mt-8"
           >
             <LogoMarquee />
           </motion.div>
         </div>
       </motion.div>
+
+      <EmailWarningDialog open={isEmailWarningOpen} onOpenChange={setIsEmailWarningOpen} />
     </section>
   )
 }

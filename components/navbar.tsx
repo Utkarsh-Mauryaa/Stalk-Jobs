@@ -5,12 +5,13 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import { signIn, signOut, useSession } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 import dynamic from "next/dynamic"
 import { Menu, X, ChevronDown, User, Settings, LogOut, LayoutDashboard } from "lucide-react"
 
 import { APP_NAME } from "@/constants"
 import { SettingsDialog } from "@/components/settings-dialog"
+import { EmailWarningDialog } from "@/components/email-warning-dialog"
 
 const ThemeToggle = dynamic(() => import("@/components/theme-toggle").then(mod => mod.ThemeToggle), {
   ssr: false,
@@ -22,6 +23,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isEmailWarningOpen, setIsEmailWarningOpen] = useState(false)
 
   return (
     <>
@@ -158,7 +160,7 @@ export function Navbar() {
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                  onClick={() => setIsEmailWarningOpen(true)}
                 >
                   Log In
                 </Button>
@@ -167,7 +169,7 @@ export function Navbar() {
                     variant="primary" 
                     size="sm" 
                     className="rounded-sm"
-                    onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                    onClick={() => setIsEmailWarningOpen(true)}
                   >
                     Sign Up
                   </Button>
@@ -269,7 +271,7 @@ export function Navbar() {
                       className="w-full justify-center"
                       onClick={() => {
                         setIsOpen(false)
-                        signIn("google", { callbackUrl: "/dashboard" })
+                        setIsEmailWarningOpen(true)
                       }}
                     >
                       Log In
@@ -279,7 +281,7 @@ export function Navbar() {
                       className="w-full rounded-sm justify-center"
                       onClick={() => {
                         setIsOpen(false)
-                        signIn("google", { callbackUrl: "/dashboard" })
+                        setIsEmailWarningOpen(true)
                       }}
                     >
                       Sign Up
@@ -296,6 +298,7 @@ export function Navbar() {
 
       {/* Settings Dialog */}
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      <EmailWarningDialog open={isEmailWarningOpen} onOpenChange={setIsEmailWarningOpen} />
     </>
   )
 }
