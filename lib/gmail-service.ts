@@ -198,18 +198,17 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
 
   const results: ParsedJob[] = [];
 
-  for (let i = 0; i < messagesToProcess.length; i++) {
-    const msg = messagesToProcess[i];
+  const processPromises = messagesToProcess.map(async (msg, index) => {
     try {
       // Add a tiny stagger to avoid all hitting AI at the exact same millisecond
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, index * 100));
 
       const detailUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`;
       const detailResponse = await fetch(detailUrl, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
 
-      if (!detailResponse.ok) continue;
+      if (!detailResponse.ok) return;
       const fullMsg = await detailResponse.json();
 
       const headers: GmailHeader[] = fullMsg.payload.headers;
@@ -222,7 +221,7 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
       const parsed = await parseJobEmail(subject, rawBody, from, date);
       
       if (!parsed) {
-        // Classified as not a job application, mark as processed and continue
+        // Classified as not a job application, mark as processed and return
         if (db.processedEmail) {
           await db.processedEmail.upsert({
             where: { userId_messageId: { userId, messageId: msg.id } },
@@ -230,7 +229,7 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
             create: { userId, messageId: msg.id }
           });
         }
-        continue;
+        return;
       }
 
       console.log(`Sync: Found job - ${parsed.role} at ${parsed.company}`);
@@ -301,7 +300,7 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
               create: { userId, messageId: msg.id }
             });
           }
-          continue;
+          return;
         }
 
         await db.job.create({
@@ -350,7 +349,9 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
         throw err;
       }
     }
-  }
+  });
+
+  await Promise.all(processPromises);
 
   return results;
 }
