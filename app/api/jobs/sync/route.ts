@@ -28,8 +28,7 @@ export async function POST() {
     
     if (isRateLimit) {
       const retryAfter = error.retryAfter ?? 60;
-      const isGemini = !!process.env.GEMINI_API_KEY;
-      const provider = isGemini ? "Gemini" : "Minimax";
+      const provider = "NVIDIA NIM";
       return NextResponse.json({
         success: false,
         error: `${provider} AI rate limit reached. Please try again later.`,

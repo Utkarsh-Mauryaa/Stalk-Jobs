@@ -4,10 +4,10 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 let openaiClient: OpenAI | null = null;
 
-function getOpenAIClient(isGemini: boolean) {
+function getOpenAIClient() {
   if (openaiClient) return openaiClient;
 
-  const apiKey = isGemini ? process.env.GEMINI_API_KEY : process.env.MINIMAX_API_KEY;
+  const apiKey = process.env.MINIMAX_API_KEY;
 
   if (!apiKey) {
     throw new Error("AI API Key is missing in environment variables");
@@ -15,18 +15,15 @@ function getOpenAIClient(isGemini: boolean) {
 
   openaiClient = new OpenAI({
     apiKey,
-    baseURL: isGemini 
-      ? 'https://generativelanguage.googleapis.com/v1beta/openai/' 
-      : 'https://integrate.api.nvidia.com/v1',
-    timeout: 20000, // 20-second timeout to prevent infinite hang
+    baseURL: 'https://integrate.api.nvidia.com/v1',
+    timeout: 30000, // Increased timeout to 30s to prevent timeouts
   });
 
   return openaiClient;
 }
 
 export async function parseJobWithAI(emailSubject: string, emailBody: string, sender: string, retryCount = 0): Promise<any> {
-  const isGemini = !!process.env.GEMINI_API_KEY;
-  const apiKey = isGemini ? process.env.GEMINI_API_KEY : process.env.MINIMAX_API_KEY;
+  const apiKey = process.env.MINIMAX_API_KEY;
   
   if (!apiKey) {
     console.error("AI API Key is missing in environment variables");
@@ -90,8 +87,8 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
   `;
 
   try {
-    const client = getOpenAIClient(isGemini);
-    const AI_MODEL = isGemini ? "gemini-2.5-flash" : "meta/llama-3.3-70b-instruct";
+    const client = getOpenAIClient();
+    const AI_MODEL = "meta/llama-3.1-70b-instruct";
 
     const completion = await client.chat.completions.create({
       model: AI_MODEL,
@@ -101,7 +98,6 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
       ],
       temperature: 0.1, // Lower temperature for more consistent/faster JSON
       max_tokens: 2048,
-      ...(isGemini ? { response_format: { type: "json_object" } } : {}),
     });
 
     const message = completion.choices[0]?.message;
