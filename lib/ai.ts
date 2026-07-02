@@ -31,60 +31,27 @@ export async function parseJobWithAI(emailSubject: string, emailBody: string, se
   }
 
   const prompt = `
-    Extract job application details from this email into JSON format.
-    
-    Email Subject: ${emailSubject}
-    Email From: ${sender}
-    Email Body: ${emailBody}
+Extract job application details from the following email.
+Subject: ${emailSubject}
+From: ${sender}
+Body: ${emailBody}
 
-    Your response must be a valid JSON object following this schema:
-    {
-      "isJobApplication": boolean,
-      "company": string,
-      "role": string,
-      "status": "applied" | "ongoing" | "rejected", 
-      "platform": string,
-      "appliedDate": string, (in YYYY-MM-DD format)
-      "contactEmail": string | null,
-      "linkedinUrl": string | null
-    }
+Respond with a raw, valid JSON object matching this schema:
+{
+  "isJobApplication": boolean, // true ONLY if this is a direct application confirmation, update, interview, or rejection. false for newsletters, digests, recommendations, or alerts.
+  "company": string,           // Name of the employer (not the job board/platform). Clean common corporate suffixes (like "Inc.", "LLC"). Default "Unknown".
+  "role": string,              // Job title/position. Default "Unknown".
+  "status": "applied" | "ongoing" | "rejected", // "applied" for receipt/confirmation, "ongoing" for interview/test/schedule, "rejected" for rejections.
+  "platform": string,          // Platform used (e.g., "LinkedIn", "Indeed", "Wellfound", "Glassdoor", or "Direct").
+  "appliedDate": string,       // Application or email date in YYYY-MM-DD.
+  "contactEmail": string | null, // Recruiter's or contact email address if visible.
+  "linkedinUrl": string | null // LinkedIn URL of the recruiter/hiring manager if visible.
+}
 
-    IMPORTANT RULES:
-    1. NEVER use literal placeholders like "Company Name", "Job Title", "LinkedIn", or "recruiter@example.com" unless they are actually the literal values in the email.
-    2. Extract the actual values from the Email Subject, From field, and Email Body.
-    3. Rules for 'isJobApplication':
-       - Set to true ONLY if the email is a direct result of a specific application the user made (e.g., "Application Received", "Thank you for applying", "Interview Invitation", "Status Update", "Application Rejected").
-       - Set to false for:
-         - Job recommendations like "Jobs you might like" or "You'd be a great fit for these jobs".
-         - Emails suggesting "Potential candidate" or "We found a match for you" where no application has been submitted yet.
-         - Emails containing multiple job listings or "View more jobs".
-         - General job alerts, newsletters, or marketing from LinkedIn, Indeed, Glassdoor, etc.
-       - If isJobApplication is false, just return {"isJobApplication": false}
-    4. Rules for 'company':
-       - Extract the name of the company/employer to which the user applied.
-       - Do NOT set to "Indeed" or "LinkedIn" if Indeed/LinkedIn was just the platform used to apply. Look for the employer's name (e.g., if applied to "SFJ Business Solutions" via Indeed, the company is "SFJ Business Solutions").
-       - If the email is from a company email address (e.g. recruiting@stripe.com), the company name is Stripe.
-       - If the sender display name is the company (e.g. "Chalkys.com" <noreply@indeed.com>), the company is Chalkys.com.
-       - If the company name cannot be determined, set this to "Unknown".
-    5. Rules for 'role':
-       - Extract the job title or role name (e.g. "Backend Developers", "Web Developer Intern", etc.).
-       - If the subject is "Indeed Application: Backend Developers", the role is "Backend Developers".
-       - If the role name cannot be determined, set this to "Unknown".
-    6. Rules for 'platform':
-       - Identify the platform used to apply (e.g. "Indeed", "LinkedIn", "Wellfound", "Glassdoor").
-       - Check the sender email, subject, and body:
-         - If sender is indeedapply@indeed.com or noreply@indeed.com, or the subject/body mentions Indeed, set to "Indeed".
-         - If sender is from linkedin.com or the subject/body mentions LinkedIn, set to "LinkedIn".
-         - If applied directly or platform is not specified, set to "Direct".
-    7. Rules for 'status':
-       - "applied": Use for confirmation that an application was submitted or received.
-       - "ongoing": Use for interview invites, scheduling, or follow-ups during the hiring process.
-       - "rejected": Use for clear rejection notices.
-    8. Rules for 'linkedinUrl':
-       - Extract the LinkedIn URL of the recruiter, hiring manager, or sender from the email body (especially sign-off/signature blocks) if present.
-       - If no LinkedIn URL is found, return null.
-    9. Return ONLY the JSON object. Do not include any explanations, reasoning, or markdown formatting blocks (like \`\`\`json).
-  `;
+RULES:
+- Return ONLY valid JSON. No explanations, no markdown blocks (do NOT wrap in \`\`\`json).
+- If isJobApplication is false, return {"isJobApplication": false}.
+`;
 
   try {
     const client = getOpenAIClient();

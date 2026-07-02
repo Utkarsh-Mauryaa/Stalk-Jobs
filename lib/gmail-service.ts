@@ -142,6 +142,23 @@ async function getValidAccessToken(userId: string) {
   }
 }
 
+function cleanCompanyName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\b(inc|corp|co|ltd|llc|pvt|gmbh|sa|incorporation|corporation|limited|company)\b\.?/gi, "")
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function cleanRoleName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
 export async function syncGmailJobs(userId: string) {
   const access_token = await getValidAccessToken(userId);
 
@@ -174,7 +191,8 @@ const allIgnoredThreadIds = new Set(ignoredThreads.map(t => t.threadId));
 
   // 2. Search for job-related emails
   // We exclude common marketing/newsletter terms, but we keep rejection terms so we can auto-update statuses
-  const query = "(subject:(application OR interview OR recruiter OR hired OR position OR role OR job OR applied OR apply) OR \"thank you for applying\" OR \"thanks for applying\" OR \"thank you for submitting\" OR \"submitting your application\" OR \"submitted your application\" OR \"application received\" OR \"received your application\" OR \"your application for\" OR \"successfully submitted\" OR \"not moving forward\" OR \"move forward with other\" OR \"schedule an interview\" OR \"invitation to interview\" OR \"interview invite\") -subject:(\"job alert\" OR \"job alerts\" OR digest OR newsletter OR \"daily update\" OR \"weekly update\" OR \"jobs matching\" OR \"jobs you might like\" OR \"recommended jobs\" OR \"new jobs for you\")";
+  // We also search for "your application" and "not move forward" to capture status updates/rejections like Wellfound's "chosen to not move forward"
+  const query = "(subject:(application OR interview OR recruiter OR hired OR position OR role OR job OR applied OR apply) OR \"thank you for applying\" OR \"thanks for applying\" OR \"thank you for submitting\" OR \"submitting your application\" OR \"submitted your application\" OR \"application received\" OR \"received your application\" OR \"your application for\" OR \"successfully submitted\" OR \"not moving forward\" OR \"move forward with other\" OR \"schedule an interview\" OR \"invitation to interview\" OR \"interview invite\" OR \"your application\" OR \"not move forward\") -subject:(\"job alert\" OR \"job alerts\" OR digest OR newsletter OR \"daily update\" OR \"weekly update\" OR \"jobs matching\" OR \"jobs you might like\" OR \"recommended jobs\" OR \"new jobs for you\")";
   const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=100`;
   const searchResponse = await fetch(searchUrl, {
     headers: { Authorization: `Bearer ${access_token}` },
@@ -234,7 +252,7 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
 
       console.log(`Sync: Found job - ${parsed.role} at ${parsed.company}`);
       
-      // Look up existing job. Try to match by threadId first, then by company & role
+      // Look up existing job. Try to match by threadId first, then by company & role (using fuzzy/normalized matching)
       let existing = null;
       if (fullMsg.threadId) {
         existing = await db.job.findFirst({
@@ -246,16 +264,45 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
       }
       
       if (!existing) {
-        existing = await db.job.findFirst({
-          where: {
-            userId,
-            company: { equals: parsed.company, mode: 'insensitive' },
-            role: { equals: parsed.role, mode: 'insensitive' }
-          }
+        // Fetch all jobs for this user to perform normalized/fuzzy matching in memory
+        const jobs = await db.job.findMany({
+          where: { userId }
         });
+
+        const cleanParsedCompany = cleanCompanyName(parsed.company);
+        const cleanParsedRole = cleanRoleName(parsed.role);
+
+        // 1. Exact normalized match (both company and role match after cleaning)
+        existing = jobs.find(job => {
+          return cleanCompanyName(job.company) === cleanParsedCompany &&
+                 cleanRoleName(job.role) === cleanParsedRole;
+        });
+
+        // 2. Substring role match within the same normalized company
+        if (!existing) {
+          existing = jobs.find(job => {
+            if (cleanCompanyName(job.company) !== cleanParsedCompany) return false;
+            const cleanJobRole = cleanRoleName(job.role);
+            return cleanJobRole.includes(cleanParsedRole) || cleanParsedRole.includes(cleanJobRole);
+          });
+        }
+
+        // 3. Fallback: if only one job exists for this company, match it
+        if (!existing) {
+          const companyJobs = jobs.filter(job => cleanCompanyName(job.company) === cleanParsedCompany);
+          if (companyJobs.length === 1) {
+            existing = companyJobs[0];
+          }
+        }
       }
 
       if (existing) {
+        // Prevent double processing of the same message ID (handles concurrent sync race conditions)
+        if (existing.processedMessageIds.includes(msg.id)) {
+          console.log(`Sync: Message ${msg.id} already processed for job ${existing.id}, skipping.`);
+          return;
+        }
+
         const shouldUpdateStatus = 
           (existing.status === "applied" && (parsed.status === "ongoing" || parsed.status === "rejected")) ||
           (existing.status === "ongoing" && parsed.status === "rejected");
@@ -290,19 +337,6 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
 
         results.push({ ...parsed, company: existing.company, role: existing.role });
       } else {
-        if (parsed.status === "rejected") {
-          console.log(`Sync: Skipping creation of new untracked rejected job for ${parsed.company}`);
-          // Mark as processed so we don't scan it again
-          if (db.processedEmail) {
-            await db.processedEmail.upsert({
-              where: { userId_messageId: { userId, messageId: msg.id } },
-              update: {},
-              create: { userId, messageId: msg.id }
-            });
-          }
-          return;
-        }
-
         await db.job.create({
           data: { 
             company: parsed.company,
