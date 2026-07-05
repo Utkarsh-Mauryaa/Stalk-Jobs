@@ -48,7 +48,20 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
     autoGhostDays: 14
   })
 
-  // Sync state when dialog opens or initialJob changes
+const toLocalDateString = (dateStr: string) => {
+  if (!dateStr) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "";
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// Sync state when dialog opens or initialJob changes
   useEffect(() => {
     if (!open) return
 
@@ -60,7 +73,7 @@ export function JobDialog({ open, onOpenChange, onSubmit, initialJob, today, tit
           role: initialJob.role,
           platform: initialJob.platform,
           status: initialJob.status,
-          appliedDate: initialJob.appliedDate,
+          appliedDate: toLocalDateString(initialJob.appliedDate),
           notes: initialJob.notes || "",
           autoGhostDays: initialJob.autoGhostDays
         })

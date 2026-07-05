@@ -3,7 +3,10 @@ import { Job, JobStatus } from "@/types/job"
 import { getJobsAction, addJobAction, updateJobAction, deleteJobAction, deleteAllJobsAction } from "@/lib/actions/job-actions"
 
 // Use the current local date dynamically
-export const TODAY_STR = new Date().toISOString().split("T")[0]
+const localDate = new Date()
+const offset = localDate.getTimezoneOffset()
+const localDateAdjusted = new Date(localDate.getTime() - offset * 60 * 1000)
+export const TODAY_STR = localDateAdjusted.toISOString().split("T")[0]
 export const TODAY = new Date()
 
 export function useJobs() {

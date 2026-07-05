@@ -223,7 +223,7 @@ export async function getJobsAction(options?: {
     role: job.role,
     platform: job.platform,
     status: job.status as JobStatus,
-    appliedDate: job.appliedDate.toISOString().split("T")[0],
+    appliedDate: job.appliedDate.toISOString(),
     notes: job.notes || "",
     autoGhostDays: job.autoGhostDays,
     interactionCount: job.interactionCount,
