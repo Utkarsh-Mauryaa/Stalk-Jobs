@@ -120,9 +120,6 @@ StalkJobs is built on a modern, robust, and production-ready tech stack:
    
    # AI Provider (NVIDIA NIM)
    MINIMAX_API_KEY="your-nvidia-nim-api-key"
-   
-   # Auto-Ghost CRON Task (Optional)
-   CRON_SECRET="your-cron-task-secret"
    ```
 
 3. **Initialize the database schema:**
