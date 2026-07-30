@@ -16,8 +16,7 @@ StalkJobs connects your personal inbox to a database to automate your entire job
    * **Ongoing:** Changes automatically when you receive interview invites, coding tests, or coordinator emails.
    * **Rejected:** Automatically flags the job as "Rejected" when a rejection email containing common negative markers (like "unfortunately") is received.
    * **Ghosted:** Flags inactive applications where no response has been heard within your configured auto-ghost timeline (default: 14 days).
-3. **Builds a Recruiter Directory:** Extracts recruiter names, contact emails, and LinkedIn links directly from your emails to help you reach out and follow up quickly.
-4. **Funnel Metrics Visualizer:** Gives you clean visual analytics highlighting your application success, conversion, and rejection rates.
+3. **Funnel Metrics Visualizer:** Gives you clean visual analytics highlighting your application success, conversion, and rejection rates.
 
 ---
 
