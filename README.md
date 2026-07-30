@@ -42,7 +42,7 @@ StalkJobs securely integrates with your Gmail inbox to automatically pull down j
 * **Intelligent Query Filter:** Utilizes an optimized query payload to target job-related keywords (`application`, `interview`, `offer`, `rejected`, `position`) while explicitly excluding marketing digests, job alerts, and newsletters.
 * **Deduplication Engine:** Leverages message and thread tracking IDs to avoid double-processing and prevent race conditions or database inflation during concurrent sync calls.
 
-### 2. 🧠 LLaMA 3.1 70B AI Parsing (via NVIDIA NIM)
+### 2. 🧠 AI Parsing
 Unlike basic regex parsers, StalkJobs uses LLaMA 3.1 70B via the NVIDIA NIM API to run high-accuracy extraction on incoming emails:
 * **Fuzzy Entity Cleanup:** Correctly normalizes company names (e.g., stripping corporate suffixes like `LLC`, `Pvt Ltd`, `Inc.`).
 * **Metadata Extraction:** Extracts key application details including job title/role, platform used to apply, and contact details (recruiter's email address and LinkedIn profile, if visible).
