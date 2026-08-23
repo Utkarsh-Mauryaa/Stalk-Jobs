@@ -1,7 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight } from "lucide-react"
 
 const item = {
   hidden: { opacity: 0, y: 20 },
@@ -32,9 +31,6 @@ export function FeatureCard({ icon, title, description, badge }: FeatureCardProp
       )}
       <h3 className="text-xl font-bold text-ink mb-4">{title}</h3>
       <p className="text-sm text-body leading-relaxed opacity-80">{description}</p>
-      <div className="mt-8 flex items-center gap-2 text-xs font-semibold text-link opacity-0 group-hover:opacity-100 transition-opacity">
-        Learn more <ArrowRight className="h-3 w-3" />
-      </div>
     </motion.div>
   )
 }
