@@ -16,8 +16,7 @@ StalkJobs connects your personal inbox to a database to automate your entire job
    * **Ongoing:** Changes automatically when you receive interview invites, coding tests, or coordinator emails.
    * **Rejected:** Automatically flags the job as "Rejected" when a rejection email containing common negative markers (like "unfortunately") is received.
    * **Ghosted:** Flags inactive applications where no response has been heard within your configured auto-ghost timeline (default: 14 days).
-3. **Builds a Recruiter Directory:** Extracts recruiter names, contact emails, and LinkedIn links directly from your emails to help you reach out and follow up quickly.
-4. **Funnel Metrics Visualizer:** Gives you clean visual analytics highlighting your application success, conversion, and rejection rates.
+3. **Funnel Metrics Visualizer:** Gives you clean visual analytics highlighting your application success, conversion, and rejection rates.
 
 ---
 
@@ -29,7 +28,6 @@ StalkJobs was created to solve these exact problems:
 * **Eliminate Manual Data Entry:** Automatically parses confirmation emails.
 * **Auto-Update Tracking:** Automatically catches interview requests and rejections.
 * **Ghost Visibility:** Visualizes which companies have stopped responding based on custom timelines.
-* **Recruiter Insights:** Extracts recruiter contacts and LinkedIn profiles for proactive follow-ups.
 
 ---
 
@@ -45,7 +43,7 @@ StalkJobs securely integrates with your Gmail inbox to automatically pull down j
 ### 2. 🧠 LLaMA 3.1 70B AI Parsing (via NVIDIA NIM)
 Unlike basic regex parsers, StalkJobs uses LLaMA 3.1 70B via the NVIDIA NIM API to run high-accuracy extraction on incoming emails:
 * **Fuzzy Entity Cleanup:** Correctly normalizes company names (e.g., stripping corporate suffixes like `LLC`, `Pvt Ltd`, `Inc.`).
-* **Metadata Extraction:** Extracts key application details including job title/role, platform used to apply, and contact details (recruiter's email address and LinkedIn profile, if visible).
+* **Metadata Extraction:** Extracts key application details including job title/role, platform used to apply, and application dates.
 * **Fuzzy Job Matching:** Intelligently matches incoming emails to existing entries in the database by thread ID or company-role name proximity (supporting substring matching and company-wide defaults).
 * **Robust Rate-Limit Recovery:** Captures 429 errors from the API, parses retry instructions from the `retry-after` header, and implements staggered exponential backoff retry policies.
 

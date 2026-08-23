@@ -43,9 +43,7 @@ Respond with a raw, valid JSON object matching this schema:
   "role": string,              // Job title/position. Default "Unknown".
   "status": "applied" | "ongoing" | "rejected", // "applied" for receipt/confirmation, "ongoing" for interview/test/schedule, "rejected" for rejections.
   "platform": string,          // Platform used (e.g., "LinkedIn", "Indeed", "Wellfound", "Glassdoor", or "Direct").
-  "appliedDate": string,       // Application or email date in YYYY-MM-DD.
-  "contactEmail": string | null, // Recruiter's or contact email address if visible.
-  "linkedinUrl": string | null // LinkedIn URL of the recruiter/hiring manager if visible.
+  "appliedDate": string        // Application or email date in YYYY-MM-DD.
 }
 
 RULES:

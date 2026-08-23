@@ -41,7 +41,6 @@ model Job {
   
   interactionCount   Int      @default(1) @map("interaction_count")
   lastInteractionAt DateTime @default(now()) @map("last_interaction_at")
-  contactEmail       String?  @map("contact_email")
   processedMessageIds String[] @default([]) @map("processed_message_ids")
   threadId           String?  @map("thread_id")
   

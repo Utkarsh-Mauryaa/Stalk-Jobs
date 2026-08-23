@@ -14,7 +14,6 @@ export async function addJobAction(data: {
   appliedDate: string
   notes?: string
   autoGhostDays?: number
-  contactEmail?: string | null
 }) {
   const session = await auth()
 
@@ -44,11 +43,6 @@ export async function addJobAction(data: {
       throw new Error("Invalid autoGhostDays. Must be an integer between 7 and 365.")
     }
   }
-  if (data.contactEmail !== undefined && data.contactEmail !== null && data.contactEmail !== "") {
-    if (typeof data.contactEmail !== "string" || data.contactEmail.length > 255 || !data.contactEmail.includes("@")) {
-      throw new Error("Invalid contact email format.")
-    }
-  }
   if (data.notes !== undefined && data.notes !== null) {
     if (typeof data.notes !== "string" || data.notes.length > 10000) {
       throw new Error("Invalid notes. Maximum length is 10,000 characters.")
@@ -67,7 +61,6 @@ export async function addJobAction(data: {
       notes: data.notes,
       autoGhostDays: autoGhostDays,
       userId: session.user.id,
-      contactEmail: data.contactEmail,
       interactionCount: 1,
       lastInteractionAt: new Date(),
     },
@@ -228,7 +221,6 @@ export async function getJobsAction(options?: {
     autoGhostDays: job.autoGhostDays,
     interactionCount: job.interactionCount,
     lastInteractionAt: job.lastInteractionAt.toISOString(),
-    contactEmail: job.contactEmail,
     processedMessageIds: job.processedMessageIds,
     threadId: job.threadId,
     interactions: job.interactions.map(i => ({
@@ -298,11 +290,6 @@ export async function updateJobAction(id: string, data: Partial<Job>) {
       throw new Error("Invalid autoGhostDays. Must be an integer between 7 and 365.")
     }
   }
-  if (data.contactEmail !== undefined && data.contactEmail !== null && data.contactEmail !== "") {
-    if (typeof data.contactEmail !== "string" || data.contactEmail.length > 255 || !data.contactEmail.includes("@")) {
-      throw new Error("Invalid contact email format.")
-    }
-  }
   if (data.notes !== undefined && data.notes !== null) {
     if (typeof data.notes !== "string" || data.notes.length > 10000) {
       throw new Error("Invalid notes. Maximum length is 10,000 characters.")
@@ -352,7 +339,6 @@ export async function updateJobAction(id: string, data: Partial<Job>) {
       autoGhostDays: data.autoGhostDays !== undefined ? Math.max(7, data.autoGhostDays) : undefined,
       interactionCount: data.interactionCount,
       lastInteractionAt: data.lastInteractionAt ? new Date(data.lastInteractionAt) : undefined,
-      contactEmail: data.contactEmail,
       threadId: data.threadId,
     },
   })

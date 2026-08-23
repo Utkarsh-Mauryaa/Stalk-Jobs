@@ -7,7 +7,6 @@ export interface ParsedJob {
   status: "applied" | "ongoing" | "rejected";
   appliedDate: Date;
   notes?: string;
-  contactEmail?: string | null;
 }
 
 /**
@@ -57,7 +56,6 @@ export async function parseJobEmail(subject: string, body: string, sender: strin
     platform: aiResult.platform || "Direct",
     status: finalStatus,
     appliedDate: isValidDate ? extractedDate : (fallbackDate || new Date()), 
-    notes: "",
-    contactEmail: aiResult.contactEmail
+    notes: ""
   };
 }

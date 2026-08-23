@@ -18,7 +18,6 @@ export type Job = {
   autoGhostDays: number;
   interactionCount: number;
   lastInteractionAt: string;
-  contactEmail?: string | null;
   processedMessageIds: string[];
   threadId?: string | null;
   interactions?: EmailInteraction[];

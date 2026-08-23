@@ -314,7 +314,6 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
             interactionCount: { increment: 1 },
             lastInteractionAt: date,
             processedMessageIds: { push: msg.id },
-            contactEmail: parsed.contactEmail || existing.contactEmail,
             threadId: fullMsg.threadId || existing.threadId,
             interactions: {
               create: {
@@ -345,7 +344,6 @@ const messagesToProcess = newMessages.slice(0, 10);  console.log(`Sync: Processi
             status: parsed.status,
             appliedDate: parsed.appliedDate,
             notes: parsed.notes,
-            contactEmail: parsed.contactEmail,
             userId,
             processedMessageIds: [msg.id],
             interactionCount: 1,
