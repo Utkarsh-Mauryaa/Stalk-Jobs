@@ -50,7 +50,7 @@ Unlike basic regex parsers, StalkJobs uses LLaMA 3.1 70B via the NVIDIA NIM API 
 ### 3. 👻 Auto-Ghost Detection
 Applications that lack responses or updates are flagged automatically:
 * **Flexible Thresholds:** Tracks status state change history and updates the application status to `Ghosted` if no new email is received or interaction is logged within a configurable time window (default is 14 days, min 7 days).
-* **Automated Sync & Cron Tasks:** Integrates a secure CRON endpoint (`/api/jobs/ghost`) protected by custom secret verification headers that can be triggered by external cron services to run mass status updates.
+
 
 ### 4. 🎛️ Unified Analytics Dashboard
 A dark-mode-first developer-centric dashboard designed with rich aesthetics:
